@@ -182,10 +182,26 @@ export default function ScanExploreTile({ onOpenApp }) {
         </div>
       )}
 
-      {/* Micro-footer */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10px', color: 'var(--text-dim)', marginTop: '8px' }}>
-        <span>Offline verified ticket</span>
-        <span style={{ color: '#10b981' }}>✓ 0ms Checkpoint scan</span>
+      {/* Micro-footer & Direct Gate POI Explore Trigger */}
+      <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10px' }}>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onOpenApp) onOpenApp('place-detail');
+          }}
+          style={{
+            background: 'rgba(2, 132, 199, 0.2)',
+            border: '1px solid rgba(56, 189, 248, 0.35)',
+            color: '#38bdf8',
+            padding: '3px 8px',
+            borderRadius: '6px',
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          Explore Amber Fort Detail ➔
+        </button>
+        <span style={{ color: '#10b981' }}>✓ Gate QR Scannable</span>
       </div>
     </div>
   );

@@ -37,6 +37,7 @@ from apps.identity.views import (
     TouristRegistrationView,
 )
 from apps.listings.views import ListingListCreateView
+from apps.poi.views import TourBriefView, UnifiedQRScanView
 from apps.sos.views import CheckInActionView, CheckInScheduleView, SOSTriggerView
 from apps.tracking.views import LocationPingView, ZoneGeoJSONView
 
@@ -174,6 +175,12 @@ urlpatterns = [
         ListingListCreateView.as_view(),
         name="v1-listings-list-create",
     ),
+    # POI & Place-Detail Endpoints (per spec)
+    path("api/v1/poi/", include("apps.poi.urls", namespace="poi")),
+    path("api/v1/scan/", UnifiedQRScanView.as_view(), name="v1-scan-slash"),
+    path("api/v1/scan", UnifiedQRScanView.as_view(), name="v1-scan"),
+    path("api/v1/tour-brief/", TourBriefView.as_view(), name="v1-tour-brief-slash"),
+    path("api/v1/tour-brief", TourBriefView.as_view(), name="v1-tour-brief"),
     # Admin Panel & Command Center Direct Endpoints (per spec)
     path("api/v1/admin/alerts/", AdminAlertsView.as_view(), name="v1-admin-alerts"),
     path(

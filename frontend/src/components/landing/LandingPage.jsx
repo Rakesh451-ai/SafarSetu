@@ -2,6 +2,7 @@ import React from 'react';
 import LandingNavbar from './LandingNavbar';
 import CompactHero from './CompactHero';
 import InteractiveFeatureStrip from './InteractiveFeatureStrip';
+import FeaturedPOICarousel from '../poi/FeaturedPOICarousel';
 import TrustStatsStrip from './TrustStatsStrip';
 import StickyMobileBar from './StickyMobileBar';
 import { TRANSLATIONS } from '../../i18n/translations';
@@ -11,6 +12,7 @@ export default function LandingPage({
   lang,
   setLang,
   onLaunchAppTab,
+  onSelectPOI,
 }) {
   const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
 
@@ -38,16 +40,23 @@ export default function LandingPage({
         onOpenApp={onLaunchAppTab}
       />
 
-      {/* 4. Short Trust / Safety Line with Stat Placeholders */}
+      {/* 4. Featured Heritage Destinations Carousel (Lazy-Loaded Background Videos) */}
+      <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '0 20px' }}>
+        <FeaturedPOICarousel
+          onSelectPOI={onSelectPOI || ((poi) => onLaunchAppTab('place-detail', poi))}
+        />
+      </div>
+
+      {/* 5. Short Trust / Safety Line with Stat Placeholders */}
       <TrustStatsStrip />
 
-      {/* 5. Sticky Bottom CTA Bar on Mobile (appears on scroll) */}
+      {/* 6. Sticky Bottom CTA Bar on Mobile */}
       <StickyMobileBar
         onOpenRegistration={() => onLaunchAppTab('id')}
         onOpenSOS={() => onLaunchAppTab('sos')}
       />
 
-      {/* 6. Minimal Footer */}
+      {/* 7. Minimal Footer */}
       <footer
         style={{
           borderTop: '1px solid var(--border-subtle)',

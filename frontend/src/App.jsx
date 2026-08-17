@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import LandingPage from './components/landing/LandingPage';
+import PlaceDetailPage from './components/poi/PlaceDetailPage';
+import StructuredTourBriefPage from './components/poi/StructuredTourBriefPage';
 import DigitalTouristID from './components/DigitalTouristID';
 import SafetyRadarGeofence from './components/SafetyRadarGeofence';
 import EmergencySOS from './components/EmergencySOS';
@@ -14,7 +16,8 @@ import {
 import { Wifi, WifiOff, RefreshCw, ArrowLeft, Home } from 'lucide-react';
 
 export default function App() {
-  const [viewMode, setViewMode] = useState('landing'); // 'landing' | 'app'
+  const [viewMode, setViewMode] = useState('landing'); // 'landing' | 'place-detail' | 'tour-brief' | 'app'
+  const [selectedPOI, setSelectedPOI] = useState(null);
   const [activeTab, setActiveTab] = useState('id'); // 'id' | 'radar' | 'sos' | 'itinerary' | 'guides' | 'listings'
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isManualOffline, setIsManualOffline] = useState(false);
@@ -66,7 +69,7 @@ export default function App() {
     }
   });
 
-  // Track real online/offline events
+  // Track online/offline events
   useEffect(() => {
     const handleOnline = () => {
       if (!isManualOffline) {
@@ -123,24 +126,78 @@ export default function App() {
     setTimeout(() => setSyncFeedback(null), 5000);
   };
 
-  const handleLaunchAppTab = (tabName) => {
-    setActiveTab(tabName);
+  const handleLaunchAppTab = (tabName, optionalPOI = null) => {
+    if (tabName === 'place-detail') {
+      const target = optionalPOI || {
+        poi_id: '45896675-3b7d-42de-9481-4398fc5a4dfc',
+        name: 'Amber Fort & Palace (Amer)',
+        category: 'UNESCO Hill Fort & Palace',
+        region: 'Amer',
+        city: 'Jaipur',
+        entry_gate_qr_id: 'GATE-AMER-FORT-01',
+      };
+      setSelectedPOI(target);
+      setViewMode('place-detail');
+    } else {
+      setActiveTab(tabName);
+      setViewMode('app');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSelectPOI = (poi) => {
+    setSelectedPOI(poi);
+    setViewMode('place-detail');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handlePlanVisit = (poi) => {
+    setSelectedPOI(poi);
+    setViewMode('tour-brief');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleAddedToItinerary = () => {
+    setActiveTab('itinerary');
     setViewMode('app');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // If in Landing Page mode, render LandingPage at root route
+  // 1. Landing Page View
   if (viewMode === 'landing') {
     return (
       <LandingPage
         lang={selectedLanguage}
         setLang={setSelectedLanguage}
         onLaunchAppTab={handleLaunchAppTab}
+        onSelectPOI={handleSelectPOI}
       />
     );
   }
 
-  // Live PWA App View
+  // 2. Place Detail View
+  if (viewMode === 'place-detail') {
+    return (
+      <PlaceDetailPage
+        poiData={selectedPOI}
+        onBack={() => setViewMode('landing')}
+        onPlanVisit={handlePlanVisit}
+      />
+    );
+  }
+
+  // 3. Structured Tour Brief View
+  if (viewMode === 'tour-brief') {
+    return (
+      <StructuredTourBriefPage
+        poiData={selectedPOI}
+        onBack={() => setViewMode('place-detail')}
+        onAddedToItinerary={handleAddedToItinerary}
+      />
+    );
+  }
+
+  // 4. Live PWA App Dashboard View
   return (
     <div className="app-container">
       {/* Top Banner with Return to Home Button */}

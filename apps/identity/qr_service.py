@@ -176,3 +176,16 @@ def verify_qr_token(signed_token: str) -> Dict[str, Any]:
         raise ValueError("Digital ID token checksum mismatch / integrity compromised.")
 
     return decoded
+
+
+def validate_qr_signature(
+    signed_token: str,
+) -> Tuple[bool, Optional[Dict[str, Any]], Optional[str]]:
+    """
+    Convenience wrapper around verify_qr_token returning (is_valid, decoded_payload, error_message).
+    """
+    try:
+        payload = verify_qr_token(signed_token)
+        return True, payload, None
+    except Exception as exc:
+        return False, None, str(exc)

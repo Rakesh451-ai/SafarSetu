@@ -96,6 +96,7 @@ LOCAL_APPS = [
     "apps.listings.apps.ListingsConfig",
     "apps.adminpanel.apps.AdminpanelConfig",
     "apps.assistant.apps.AssistantConfig",
+    "apps.poi.apps.PoiConfig",
 ]
 
 INSTALLED_APPS = ASGI_APPS + DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
