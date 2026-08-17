@@ -1,0 +1,3 @@
+"""
+Adminpanel app migrations.
+"""

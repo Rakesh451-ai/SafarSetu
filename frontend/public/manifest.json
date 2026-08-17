@@ -1,0 +1,23 @@
+{
+  "name": "SafarSetu - Smart Tourist Safety & Verified Travel",
+  "short_name": "SafarSetu",
+  "description": "Digital Tourist ID, Offline Safety Geofencing, 1-Tap Emergency SOS, and Verified Tourism Services",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

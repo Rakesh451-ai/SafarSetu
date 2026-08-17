@@ -1,0 +1,15 @@
+[flake8]
+jobs = 1
+max-line-length = 88
+extend-ignore = E203, W503, E501
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    */migrations/*,
+    build,
+    dist,
+    .system_generated
+per-file-ignores =
+    __init__.py:F401
+    */settings/*:F405,F403

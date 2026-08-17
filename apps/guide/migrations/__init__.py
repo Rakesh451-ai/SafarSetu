@@ -1,0 +1,3 @@
+"""
+Guide app migrations.
+"""
