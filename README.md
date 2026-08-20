@@ -56,7 +56,24 @@ SafarSetu/
 
 ---
 
+
+
 ## 🚀 How to Run on Local Server
+
+### Run this command to run on local server
+
+Clone the repo 
+cd SafarSetu
+python -m venv venv
+source venv/bin/activate   -- it is for linux   
+venv\scripts\activate  -- for windows 
+
+pip install -r requirements.txt
+python manage.py makemigrations
+python manage.py migrate
+python manage.py runserver
+
+
 
 Follow these simple steps to run SafarSetu on your local machine:
 
