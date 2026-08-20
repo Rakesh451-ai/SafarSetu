@@ -83,6 +83,8 @@ def api_health_check(request):
 
 
 urlpatterns = [
+    # Web PWA Interface & Templates
+    path("", include("apps.web.urls", namespace="web")),
     # Admin Panel
     path("admin/", admin.site.urls),
     # OpenAPI Schema & Interactive Docs

@@ -1,0 +1,86 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}User Profile & Bookings | SafarSetu{% endblock %}
+
+{% block content %}
+<!-- Profile Header matching Mockup -->
+<div style="background:#FFF; border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:var(--shadow-md); margin-bottom:14px; display:flex; align-items:center; gap:14px;">
+  <div style="width:58px; height:58px; border-radius:50%; background:linear-gradient(135deg, #071326, #1E3E62); color:#FFF; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:800; border:2px solid var(--gov-gold); flex-shrink:0;">
+    AM
+  </div>
+  <div style="flex:1;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div style="font-size:16px; font-weight:800; color:var(--text-main);">{{ tourist.name }}</div>
+      <span class="verified-tag" style="font-size:9px;">🛡️ ID Verified</span>
+    </div>
+    <div style="font-size:12px; color:var(--text-muted);">{{ stats.level }} • {{ stats.points }} Safety Points</div>
+    <div style="font-size:11px; color:#94A3B8; margin-top:2px;">Digital Pass: #ID-{{ digital_id.id_token|stringformat:"s"|slice:":8" }}</div>
+  </div>
+</div>
+
+<!-- My Stats Grid matching Mockup: 12 Trips | 28 Places | 8 Bookings | 1200 Points -->
+<div style="background:#FFF; border:1px solid var(--border); border-radius:14px; padding:12px; display:grid; grid-template-columns:repeat(4, 1fr); text-align:center; gap:4px; box-shadow:var(--shadow-sm); margin-bottom:16px;">
+  <div>
+    <div style="font-size:16px; font-weight:900; color:var(--gov-navy-800);">{{ stats.trips }}</div>
+    <div style="font-size:10px; color:var(--text-muted);">Trips</div>
+  </div>
+  <div>
+    <div style="font-size:16px; font-weight:900; color:var(--gov-navy-800);">{{ stats.places }}</div>
+    <div style="font-size:10px; color:var(--text-muted);">Places</div>
+  </div>
+  <div>
+    <div style="font-size:16px; font-weight:900; color:var(--gov-navy-800);">{{ stats.bookings }}</div>
+    <div style="font-size:10px; color:var(--text-muted);">Bookings</div>
+  </div>
+  <div>
+    <div style="font-size:16px; font-weight:900; color:var(--gov-gold);">{{ stats.points }}</div>
+    <div style="font-size:10px; color:var(--text-muted);">Points</div>
+  </div>
+</div>
+
+<!-- My Bookings Section -->
+<div class="section-header">
+  <h2 class="section-title">My Bookings & Verified Passes</h2>
+  <a href="#" class="section-link" onclick="showToast('Showing all historical verified trips')">View All</a>
+</div>
+
+<div style="display:flex; flex-direction:column; gap:10px; margin-bottom:18px;">
+  <div style="background:#FFF; border:1px solid var(--border); border-radius:12px; padding:12px; box-shadow:var(--shadow-sm);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+      <span style="font-size:13px; font-weight:700;">The Grand Palace, Jaipur</span>
+      <span class="action-pill-btn" style="background:var(--zone-safe-bg); color:var(--zone-safe-text); font-size:10px; padding:2px 8px; border:none;">Confirmed</span>
+    </div>
+    <div style="font-size:11px; color:var(--text-muted);">12 May – 14 May 2026 • Booking ID: #DTG12345</div>
+  </div>
+
+  <div style="background:#FFF; border:1px solid var(--border); border-radius:12px; padding:12px; box-shadow:var(--shadow-sm);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+      <span style="font-size:13px; font-weight:700;">Hawa Mahal & Amer Fort Audio Pass</span>
+      <span class="action-pill-btn" style="background:var(--zone-safe-bg); color:var(--zone-safe-text); font-size:10px; padding:2px 8px; border:none;">Active</span>
+    </div>
+    <div style="font-size:11px; color:var(--text-muted);">2 Tickets • Gate Fast Track Entry</div>
+  </div>
+</div>
+
+<!-- Settings & Offline Storage -->
+<h2 class="section-title" style="margin-bottom:10px;">Settings & Offline Safety</h2>
+<div style="background:#FFF; border:1px solid var(--border); border-radius:14px; padding:6px 0; box-shadow:var(--shadow-sm);">
+  <div style="padding:10px 14px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border);">
+    <span style="font-size:13px; font-weight:600;">🌐 Language / भाषा</span>
+    <button class="action-pill-btn" onclick="document.getElementById('lang-modal-backdrop').classList.add('active')" style="font-size:11px; padding:3px 10px;">
+      English (Change)
+    </button>
+  </div>
+  <div style="padding:10px 14px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border);">
+    <span style="font-size:13px; font-weight:600;">💾 Offline Cache Synchronization</span>
+    <button class="action-pill-btn" onclick="showToast('✅ All Rajasthan safe zones & Digital ID cached offline!')" style="font-size:11px; padding:3px 10px; background:var(--gov-navy-800); color:#FFF; border:none;">
+      Sync Now
+    </button>
+  </div>
+  <div style="padding:10px 14px; display:flex; justify-content:space-between; align-items:center;">
+    <span style="font-size:13px; font-weight:600; color:var(--zone-danger);">🚨 Emergency Dispatch Logs</span>
+    <span style="font-size:11px; color:var(--text-muted);">0 Active Incidents</span>
+  </div>
+</div>
+{% endblock %}

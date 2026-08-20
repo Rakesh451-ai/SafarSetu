@@ -1,0 +1,121 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Emergency 24x7 Assistance | SafarSetu SOS{% endblock %}
+
+{% block content %}
+<div class="sos-page-wrap">
+  <div style="font-size:12px; font-weight:700; color:#FCA5A5; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">
+    Government of India • Emergency Response
+  </div>
+  <h1 style="font-size:22px; font-weight:900;">24x7 Emergency Assistance</h1>
+  <p style="font-size:12px; color:#FECACA; margin-top:2px;">
+    Press the button below to immediately broadcast your GPS coordinates to Police (112) and emergency contacts.
+  </p>
+
+  <!-- Large Unmistakable 1-Tap SOS Button -->
+  <button class="sos-shield-btn" id="btn-trigger-sos" onclick="triggerEmergencySOS()" aria-label="Trigger Emergency SOS">
+    <span style="font-size:40px;">🚨</span>
+    <span>SOS</span>
+    <span style="font-size:10px; font-weight:700; letter-spacing:0.5px;">1-TAP EMERGENCY</span>
+  </button>
+
+  <div style="font-size:12px; color:#FCA5A5; font-weight:600; margin-bottom:12px;">
+    Auto-Dispatching to: Rajasthan Police Command (112)
+  </div>
+
+  <!-- Quick Dial Grid matching Mockup -->
+  <div class="sos-grid-quick-dial">
+    <a href="tel:112" class="sos-dial-card">
+      <div style="font-size:24px;">👮</div>
+      <div>
+        <div style="font-weight:800; font-size:14px;">Police: 112</div>
+        <div style="font-size:10px; color:#E2E8F0;">Emergency Response</div>
+      </div>
+    </a>
+
+    <a href="tel:108" class="sos-dial-card">
+      <div style="font-size:24px;">🚑</div>
+      <div>
+        <div style="font-weight:800; font-size:14px;">Medical: 108</div>
+        <div style="font-size:10px; color:#E2E8F0;">Ambulance & Trauma</div>
+      </div>
+    </a>
+
+    <a href="tel:1363" class="sos-dial-card">
+      <div style="font-size:24px;">🏛️</div>
+      <div>
+        <div style="font-weight:800; font-size:14px;">Tourist: 1363</div>
+        <div style="font-size:10px; color:#E2E8F0;">Ministry 24x7 Helpline</div>
+      </div>
+    </a>
+
+    <a href="tel:101" class="sos-dial-card">
+      <div style="font-size:24px;">🚒</div>
+      <div>
+        <div style="font-weight:800; font-size:14px;">Fire: 101</div>
+        <div style="font-size:10px; color:#E2E8F0;">Fire & Rescue Control</div>
+      </div>
+    </a>
+  </div>
+
+  <!-- Emergency Contacts & Missed Check-in Card -->
+  <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:14px; padding:14px; width:100%; margin-top:16px; text-align:left;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <span style="font-size:12px; font-weight:700; color:#FDE68A;">Auto-Notified Emergency Contact:</span>
+      <span style="font-size:10px; color:#94A3B8;">SMS & GPS Link</span>
+    </div>
+    {% for c in emergency_contacts %}
+    <div style="font-size:13px; font-weight:700; color:#FFF;">{{ c.name }} ({{ c.relation }})</div>
+    <div style="font-size:12px; color:#CBD5E1;">{{ c.phone }}</div>
+    {% endfor %}
+  </div>
+
+  <!-- Missed Check-in Toggle -->
+  <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:14px; padding:12px; width:100%; margin-top:10px; display:flex; justify-content:space-between; align-items:center; text-align:left;">
+    <div>
+      <div style="font-size:12px; font-weight:700;">Periodic Safety Check-in</div>
+      <div style="font-size:10px; color:#CBD5E1;">Auto-alert if you miss 60 min check-in</div>
+    </div>
+    <input type="checkbox" checked style="width:20px; height:20px; accent-color:var(--zone-danger);" onchange="showToast('Safety check-in updated')">
+  </div>
+</div>
+
+<!-- SOS Active Confirmation Modal -->
+<div class="modal-backdrop" id="sos-confirm-modal">
+  <div class="modal-sheet" style="text-align:center;">
+    <div style="font-size:48px; margin-bottom:8px;">🚨</div>
+    <h3 style="font-size:18px; font-weight:800; color:var(--zone-danger); margin-bottom:4px;">EMERGENCY SOS ACTIVE</h3>
+    <p style="font-size:13px; color:var(--text-main); margin-bottom:12px;">
+      Your distress broadcast has been received by <strong>Rajasthan Police Command (112)</strong>.
+    </p>
+    <div style="background:#F1F5F9; border-radius:10px; padding:10px; text-align:left; font-size:12px; margin-bottom:16px;">
+      <div><strong>Incident ID:</strong> #SOS-RAJ-8942</div>
+      <div><strong>Nearest Unit:</strong> Jaipur Heritage Response (450m)</div>
+      <div><strong>Estimated Arrival:</strong> 4–6 Minutes</div>
+    </div>
+    <button class="btn-primary" style="background:#0F172A;" onclick="document.getElementById('sos-confirm-modal').classList.remove('active')">
+      Acknowledge & Keep Line Open
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function triggerEmergencySOS() {
+  fetch("/api/trigger-sos/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ notes: "Urgent One-Tap SOS from tourist web PWA" })
+  })
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById("sos-confirm-modal").classList.add("active");
+  })
+  .catch(() => {
+    document.getElementById("sos-confirm-modal").classList.add("active");
+  });
+}
+</script>
+{% endblock %}

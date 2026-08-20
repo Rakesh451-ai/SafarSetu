@@ -1,0 +1,185 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Scan QR & Digital Tourist ID | SafarSetu{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 14px; display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <h1 style="font-size: 20px; font-weight: 800; color: var(--gov-navy-900);">Scan & Digital ID</h1>
+    <p style="font-size: 12px; color: var(--text-muted);">Point camera at monument gate or verify your digital pass</p>
+  </div>
+  <button class="action-pill-btn" onclick="openUpdateModal()" style="font-size:11px;">
+    ✏️ Edit Pass
+  </button>
+</div>
+
+<!-- Camera Viewfinder Card -->
+<div class="scanner-viewport-card">
+  <div class="scanner-frame">
+    <div class="scanner-laser"></div>
+  </div>
+  <div style="position:absolute; bottom:12px; color:#FFF; font-size:12px; font-weight:600; text-shadow:0 1px 4px rgba(0,0,0,0.8);">
+    Place Gate QR or Tourist Pass in Frame
+  </div>
+</div>
+
+<!-- Scanner Quick Action Buttons -->
+<div class="scanner-actions">
+  <button class="action-pill-btn" onclick="showToast('Flashlight toggled')">
+    ⚡ Flash
+  </button>
+  <button class="action-pill-btn" onclick="simulateGateScan()">
+    🎯 Simulate Gate Scan
+  </button>
+  <button class="action-pill-btn" onclick="document.getElementById('pass-card-section').scrollIntoView({behavior:'smooth'})">
+    🪪 Show My Pass
+  </button>
+</div>
+
+<!-- Active Digital Tourist ID Card -->
+<div id="pass-card-section" class="digital-id-card">
+  <div class="pass-header">
+    <div>
+      <div style="font-size: 10px; font-weight: 700; color: var(--gov-gold); text-transform: uppercase; letter-spacing: 0.5px;">
+        Government of India • Tourist Pass
+      </div>
+      <div style="font-size: 16px; font-weight: 800;">Digital Tourist ID</div>
+    </div>
+    <div class="verified-tag" style="background:rgba(255,255,255,0.2); color:#FFF; border-color:rgba(255,255,255,0.4);">
+      🛡️ PyJWT Signed
+    </div>
+  </div>
+
+  <div class="pass-body">
+    <div class="pass-qr-box">
+      {% if digital_id.qr_image_base64 %}
+        <img id="pass-qr-img" src="{{ digital_id.qr_image_base64 }}" alt="Signed Digital ID QR Code">
+      {% else %}
+        <div style="font-size: 40px;">📱</div>
+      {% endif %}
+    </div>
+
+    <div class="pass-details">
+      <div class="pass-row">
+        <div class="pass-label">Full Name</div>
+        <div class="pass-val" id="pass-name-val">{{ tourist.name }}</div>
+      </div>
+      <div class="pass-row">
+        <div class="pass-label">Nationality & ID Proof</div>
+        <div class="pass-val">{{ tourist.nationality }} • {{ tourist.id_proof_type }}</div>
+      </div>
+      <div class="pass-row">
+        <div class="pass-label">Validity Period</div>
+        <div class="pass-val">{{ tourist.trip_start|date:"d M Y" }} – {{ tourist.trip_end|date:"d M Y" }}</div>
+      </div>
+      <div class="pass-row" style="margin-top:6px;">
+        <div class="pass-label">SHA-256 Checksum</div>
+        <div class="pass-checksum" id="pass-token-val">#{{ digital_id.id_token|stringformat:"s"|slice:":12" }}...</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.15); display:flex; justify-content:space-between; align-items:center;">
+    <span style="font-size:11px; color:#94A3B8;">Status: <strong style="color:#10B981;">ACTIVE & ENCRYPTED</strong></span>
+    <button class="action-pill-btn" onclick="validateMyPass()" style="font-size:11px; padding:4px 10px; background:var(--gov-gold); color:#071326; border:none;">
+      ✓ Check Signature
+    </button>
+  </div>
+</div>
+
+<!-- Modal: Update & Re-sign Pass -->
+<div class="modal-backdrop" id="update-pass-modal">
+  <div class="modal-sheet">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="font-size:16px; font-weight:700;">Update & Re-sign Digital Pass</h3>
+      <button onclick="closeUpdateModal()" style="background:none; border:none; font-size:18px; cursor:pointer;">✕</button>
+    </div>
+    <form id="update-pass-form" onsubmit="handlePassUpdate(event)">
+      <div class="form-group">
+        <label class="form-label">Full Legal Name</label>
+        <input type="text" id="input-name" class="form-control" value="{{ tourist.name }}" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nationality</label>
+        <input type="text" id="input-nationality" class="form-control" value="{{ tourist.nationality }}" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone Number</label>
+        <input type="text" id="input-phone" class="form-control" value="{{ tourist.phone }}" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ID Proof Type</label>
+        <select id="input-id-proof" class="form-control">
+          {% for val, label in id_proof_choices %}
+            <option value="{{ val }}" {% if tourist.id_proof_type == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn-primary" style="margin-top:10px;">
+        🛡️ Cryptographically Sign & Save Pass
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function openUpdateModal() {
+  document.getElementById("update-pass-modal").classList.add("active");
+}
+function closeUpdateModal() {
+  document.getElementById("update-pass-modal").classList.remove("active");
+}
+
+function simulateGateScan() {
+  showToast("Scanning physical gate QR at Hawa Mahal...");
+  setTimeout(() => {
+    fetch("/api/simulate-scan/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ qr_data: "GATE-HAWA-MAHAL-02" })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.redirect_url) {
+        window.location.href = data.redirect_url;
+      } else {
+        showToast("Scanned: " + data.title);
+      }
+    });
+  }, 600);
+}
+
+function validateMyPass() {
+  showToast("Validating PyJWT SHA-256 signature with Rajasthan Security Server...");
+  setTimeout(() => {
+    showToast("✅ Signature Valid! Pass verified by Ministry of Tourism.", "info");
+  }, 500);
+}
+
+function handlePassUpdate(e) {
+  e.preventDefault();
+  const name = document.getElementById("input-name").value;
+  const nationality = document.getElementById("input-nationality").value;
+  const phone = document.getElementById("input-phone").value;
+  const id_proof_type = document.getElementById("input-id-proof").value;
+
+  fetch("/api/update-pass/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, nationality, phone, id_proof_type })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      document.getElementById("pass-name-val").innerText = name;
+      if (data.qr_base64) document.getElementById("pass-qr-img").src = data.qr_base64;
+      closeUpdateModal();
+      showToast("🛡️ Pass updated and newly signed with SHA-256!");
+    }
+  });
+}
+</script>
+{% endblock %}

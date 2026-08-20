@@ -1,0 +1,28 @@
+<div class="modal-backdrop" id="lang-modal-backdrop">
+  <div class="modal-sheet">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="font-size:16px; font-weight:700;">Choose Language / भाषा चुनें</h3>
+      <button id="btn-close-lang" style="background:none; border:none; font-size:18px; cursor:pointer;">✕</button>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; margin-bottom:16px;">
+      <button class="action-pill-btn" style="background:var(--gov-navy-800); color:#FFF; justify-content:center;" onclick="showToast('Language set to English'); document.getElementById('lang-modal-backdrop').classList.remove('active');">
+        English (Active)
+      </button>
+      <button class="action-pill-btn" style="justify-content:center;" onclick="showToast('भाषा बदलकर हिन्दी कर दी गई है'); document.getElementById('lang-modal-backdrop').classList.remove('active');">
+        हिन्दी (Hindi)
+      </button>
+      <button class="action-pill-btn" style="justify-content:center;" onclick="showToast('Language: தமிழ்'); document.getElementById('lang-modal-backdrop').classList.remove('active');">
+        தமிழ் (Tamil)
+      </button>
+      <button class="action-pill-btn" style="justify-content:center;" onclick="showToast('Language: తెలుగు'); document.getElementById('lang-modal-backdrop').classList.remove('active');">
+        తెలుగు (Telugu)
+      </button>
+      <button class="action-pill-btn" style="justify-content:center;" onclick="showToast('Language: বাংলা'); document.getElementById('lang-modal-backdrop').classList.remove('active');">
+        বাংলা (Bengali)
+      </button>
+      <button class="action-pill-btn" style="justify-content:center;" onclick="showToast('Language: मराठी'); document.getElementById('lang-modal-backdrop').classList.remove('active');">
+        मराठी (Marathi)
+      </button>
+    </div>
+  </div>
+</div>

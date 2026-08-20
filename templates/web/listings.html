@@ -1,0 +1,72 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Verified Listings (Hotels, Transport & Entry) | SafarSetu{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:12px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+    <h1 style="font-size:20px; font-weight:800; color:var(--gov-navy-900);">Verified Listings</h1>
+    <div class="verified-tag">🛡️ Official Tariffs</div>
+  </div>
+  <p style="font-size:12px; color:var(--text-muted);">Hotels, Stays, Pre-Paid Cabs, and Monument Entry Tickets.</p>
+</div>
+
+<!-- Filter Pills by Type matching Mockup -->
+<div style="display:flex; gap:6px; margin-bottom:14px; overflow-x:auto;">
+  <a href="{% url 'web:listings' %}" class="action-pill-btn" style="{% if not selected_type %}background:var(--gov-navy-800); color:#FFF;{% endif %} font-size:11px;">All Listings</a>
+  <a href="{% url 'web:listings' %}?type=hotel" class="action-pill-btn" style="{% if selected_type == 'hotel' %}background:var(--gov-navy-800); color:#FFF;{% endif %} font-size:11px;">🏨 Hotels & Stays</a>
+  <a href="{% url 'web:listings' %}?type=transport" class="action-pill-btn" style="{% if selected_type == 'transport' %}background:var(--gov-navy-800); color:#FFF;{% endif %} font-size:11px;">🚕 Pre-Paid Cabs</a>
+  <a href="{% url 'web:listings' %}?type=entry_fee" class="action-pill-btn" style="{% if selected_type == 'entry_fee' %}background:var(--gov-navy-800); color:#FFF;{% endif %} font-size:11px;">🏛️ Entry Fees</a>
+</div>
+
+<!-- Listings Cards Grid -->
+<div style="display:flex; flex-direction:column; gap:12px;">
+  {% for listing in listings %}
+  <div style="background:#FFF; border:1px solid var(--border); border-radius:14px; padding:14px; box-shadow:var(--shadow-sm); display:flex; gap:12px;">
+    <div style="width:64px; height:64px; border-radius:10px; background:linear-gradient(135deg, #071326, #C59B27); color:#FFF; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0;">
+      {% if listing.type == 'hotel' %}🏨{% elif listing.type == 'transport' %}🚕{% else %}🏛️{% endif %}
+    </div>
+    <div style="flex:1;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <div style="font-size:14px; font-weight:800;">{{ listing.title }}</div>
+          <div style="font-size:11px; color:var(--text-muted);">{{ listing.city }} • {{ listing.get_type_display }}</div>
+        </div>
+        <span class="verified-tag" style="font-size:9px;">🛡️ Verified</span>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:6px; border-top:1px solid var(--border);">
+        <div style="font-size:13px; font-weight:800; color:var(--gov-navy-800);">
+          {{ listing.price_info|default:"Official Standard Tariff" }}
+        </div>
+        <button class="action-pill-btn" onclick="showToast('Booking details saved to your profile!')" style="background:var(--gov-navy-800); color:#FFF; font-size:11px; border:none; padding:4px 12px;">
+          Book Now
+        </button>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div style="background:#FFF; border:1px solid var(--border); border-radius:14px; padding:14px; box-shadow:var(--shadow-sm); display:flex; gap:12px;">
+    <div style="width:64px; height:64px; border-radius:10px; background:linear-gradient(135deg, #071326, #C59B27); color:#FFF; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0;">
+      🏨
+    </div>
+    <div style="flex:1;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <div style="font-size:14px; font-weight:800;">The Grand Palace Heritage Haveli</div>
+          <div style="font-size:11px; color:var(--text-muted);">Jaipur • Verified Hotel • ⭐ 4.7 (2.1k)</div>
+        </div>
+        <span class="verified-tag" style="font-size:9px;">🛡️ Verified</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:6px; border-top:1px solid var(--border);">
+        <div style="font-size:13px; font-weight:800; color:var(--gov-navy-800);">₹2,499 / night</div>
+        <button class="action-pill-btn" onclick="showToast('Hotel booking confirmed!')" style="background:var(--gov-navy-800); color:#FFF; font-size:11px; border:none; padding:4px 12px;">
+          Book Now
+        </button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Welcome to SafarSetu | Smart Tourism & Safety{% endblock %}
+
+{% block content %}
+<div style="min-height: calc(100vh - 120px); display:flex; flex-direction:column; justify-content:space-between; padding: 20px 8px 10px;">
+  <!-- Top Hero Card -->
+  <div style="background: linear-gradient(180deg, #071326 0%, #1E3E62 100%); border-radius: 20px; padding: 28px 20px; color: #FFFFFF; text-align: center; box-shadow: var(--shadow-lg); position: relative; overflow: hidden;">
+    <div style="display:inline-block; font-size: 32px; margin-bottom: 8px;">🧭</div>
+    <h1 style="font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px;">SafarSetu</h1>
+    <div style="font-size: 12px; color: var(--gov-gold); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px;">
+      Ministry of Tourism • Government of India
+    </div>
+
+    <p style="font-size: 14px; color: #E2E8F0; line-height: 1.5; margin-bottom: 18px;">
+      Scan • Explore • Learn • Book • Experience
+    </p>
+
+    <div style="background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 14px; margin-bottom: 16px; border: 1px solid rgba(255, 255, 255, 0.15);">
+      <div style="font-size: 13px; font-weight: 700; color: #F8FAFC; margin-bottom: 2px;">One Scan, Complete Travel Assistant!</div>
+      <div style="font-size: 11px; color: #CBD5E1;">Instant verified audio guides, real-time safety radar, and 1-tap SOS response across Rajasthan.</div>
+    </div>
+
+    <a href="{% url 'web:home' %}" class="btn-primary" style="display:flex; align-items:center; justify-content:center; text-decoration:none; background: var(--gov-gold); color: #071326; font-size: 15px; font-weight: 800; box-shadow: 0 4px 14px rgba(197, 155, 39, 0.4);">
+      Get Started & Explore →
+    </a>
+
+    <div style="margin-top: 14px;">
+      <button id="btn-open-lang-onboarding" onclick="document.getElementById('lang-modal-backdrop').classList.add('active');" style="background:none; border:none; color:#CBD5E1; font-size:12px; font-weight:600; cursor:pointer; text-decoration:underline;">
+        Choose Language / भाषा चुनें (English / हिन्दी)
+      </button>
+    </div>
+  </div>
+
+  <!-- 3 Swipeable / Key Value Cards Below -->
+  <div style="margin-top: 20px;">
+    <div style="font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; text-align: center;">
+      How SafarSetu Protects & Guides You
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div style="background:#FFF; border:1px solid var(--border); border-radius:12px; padding:12px; display:flex; align-items:center; gap:12px; box-shadow:var(--shadow-sm);">
+        <div style="width:40px; height:40px; border-radius:10px; background:var(--zone-safe-bg); color:var(--zone-safe); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;">
+          🪪
+        </div>
+        <div>
+          <div style="font-size:13px; font-weight:700;">Digital Tourist ID Pass</div>
+          <div style="font-size:11px; color:var(--text-muted);">PyJWT SHA-256 signed tamper-proof QR identity.</div>
+        </div>
+      </div>
+
+      <div style="background:#FFF; border:1px solid var(--border); border-radius:12px; padding:12px; display:flex; align-items:center; gap:12px; box-shadow:var(--shadow-sm);">
+        <div style="width:40px; height:40px; border-radius:10px; background:var(--zone-caution-bg); color:var(--zone-caution); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;">
+          📡
+        </div>
+        <div>
+          <div style="font-size:13px; font-weight:700;">Safety Radar & Geofenced Zones</div>
+          <div style="font-size:11px; color:var(--text-muted);">Real-time crowd telemetry and safe walking corridors.</div>
+        </div>
+      </div>
+
+      <div style="background:#FFF; border:1px solid var(--border); border-radius:12px; padding:12px; display:flex; align-items:center; gap:12px; box-shadow:var(--shadow-sm);">
+        <div style="width:40px; height:40px; border-radius:10px; background:var(--zone-danger-bg); color:var(--zone-danger); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;">
+          🚨
+        </div>
+        <div>
+          <div style="font-size:13px; font-weight:700;">1-Tap Emergency SOS (112)</div>
+          <div style="font-size:11px; color:var(--text-muted);">Instant location broadcast to Police Command Center.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

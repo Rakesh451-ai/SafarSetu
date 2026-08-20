@@ -1,0 +1,84 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Govt-Verified Tour Guides | SafarSetu{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 12px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+    <h1 style="font-size: 20px; font-weight: 800; color: var(--gov-navy-900);">Verified Local Guides</h1>
+    <div class="verified-tag">🛡️ Official Ministry Vetted</div>
+  </div>
+  <p style="font-size: 12px; color: var(--text-muted);">
+    Credentialed, background-verified tourist guides licensed by the Rajasthan Department of Tourism.
+  </p>
+</div>
+
+<!-- Region Filter Pills -->
+<div style="display:flex; gap:6px; margin-bottom:14px; overflow-x:auto;">
+  <a href="{% url 'web:guides' %}" class="action-pill-btn" style="{% if not selected_region %}background:var(--gov-navy-800); color:#FFF;{% endif %} font-size:11px;">All Regions</a>
+  <a href="{% url 'web:guides' %}?region=Jaipur" class="action-pill-btn" style="{% if selected_region == 'Jaipur' %}background:var(--gov-navy-800); color:#FFF;{% endif %} font-size:11px;">Jaipur</a>
+  <a href="{% url 'web:guides' %}?region=Amer" class="action-pill-btn" style="{% if selected_region == 'Amer' %}background:var(--gov-navy-800); color:#FFF;{% endif %} font-size:11px;">Amer</a>
+  <a href="{% url 'web:guides' %}?region=Udaipur" class="action-pill-btn" style="{% if selected_region == 'Udaipur' %}background:var(--gov-navy-800); color:#FFF;{% endif %} font-size:11px;">Udaipur</a>
+  <a href="{% url 'web:guides' %}?region=Jodhpur" class="action-pill-btn" style="{% if selected_region == 'Jodhpur' %}background:var(--gov-navy-800); color:#FFF;{% endif %} font-size:11px;">Jodhpur</a>
+</div>
+
+<!-- Guides List -->
+<div style="display:flex; flex-direction:column; gap:12px;">
+  {% for guide in guides %}
+  <div style="background:#FFF; border:1px solid var(--border); border-radius:14px; padding:14px; box-shadow:var(--shadow-sm); display:flex; gap:12px;">
+    <div style="width:60px; height:60px; border-radius:12px; background:linear-gradient(135deg, #071326, #1E3E62); color:#FFF; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0;">
+      👤
+    </div>
+    <div style="flex:1;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <div style="font-size:15px; font-weight:800; color:var(--text-main);">{{ guide.user.get_full_name|default:guide.user.username }}</div>
+          <div style="font-size:11px; color:var(--text-muted);">Govt License #RAJ-GD-{{ guide.id|stringformat:"04d" }}</div>
+        </div>
+        <span class="verified-tag" style="font-size:9px;">🛡️ Verified</span>
+      </div>
+
+      <div style="font-size:12px; color:var(--text-main); margin-top:6px;">
+        🗣️ <strong>Languages:</strong> {{ guide.languages_spoken|default:"English, Hindi, French" }}
+      </div>
+      <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">
+        📍 {{ guide.regions_served }} • {{ guide.experience_years }} yrs experience
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:8px; border-top:1px solid var(--border);">
+        <div style="font-size:13px; font-weight:800; color:var(--gov-navy-800);">
+          ₹{{ guide.hourly_rate }}/hr <span style="font-size:10px; font-weight:normal; color:var(--text-muted);">Govt Regulated</span>
+        </div>
+        <a href="{% url 'web:guide-detail' guide.id %}" class="action-pill-btn" style="background:var(--gov-navy-800); color:#FFF; font-size:11px; border:none; padding:5px 12px;">
+          View Profile & Book →
+        </a>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div style="background:#FFF; border:1px solid var(--border); border-radius:14px; padding:14px; box-shadow:var(--shadow-sm); display:flex; gap:12px;">
+    <div style="width:60px; height:60px; border-radius:12px; background:linear-gradient(135deg, #071326, #1E3E62); color:#FFF; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0;">
+      👳🏽‍♂️
+    </div>
+    <div style="flex:1;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <div style="font-size:15px; font-weight:800;">Rajendra Singh Rathore</div>
+          <div style="font-size:11px; color:var(--text-muted);">License: #RAJ-GD-0492 (Senior Guide)</div>
+        </div>
+        <span class="verified-tag" style="font-size:9px;">🛡️ Verified</span>
+      </div>
+      <div style="font-size:12px; margin-top:6px;">🗣️ <strong>Languages:</strong> English, Hindi, German</div>
+      <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">📍 Jaipur, Amer • 12 yrs exp • ⭐ 4.9 (420 reviews)</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:8px; border-top:1px solid var(--border);">
+        <div style="font-size:13px; font-weight:800; color:var(--gov-navy-800);">₹800/hr</div>
+        <button class="action-pill-btn" onclick="showToast('Booking requested for Guide Rajendra Singh!')" style="background:var(--gov-navy-800); color:#FFF; font-size:11px; border:none; padding:5px 12px;">
+          Book Guide
+        </button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

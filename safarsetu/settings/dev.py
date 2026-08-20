@@ -83,3 +83,4 @@ if not is_redis_available() or env.bool("USE_IN_MEMORY_CHANNEL_LAYER", default=F
 
 # Email backend for development (prints to console)
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
