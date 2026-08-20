@@ -63,6 +63,8 @@ SafarSetu/
 ### Run this command to run on local server
 
 Clone the repo 
+```bash
+git clone https://github.com/Rakesh451-ai/SafarSetu.git
 cd SafarSetu
 python -m venv venv
 source venv/bin/activate   -- it is for linux   
@@ -72,7 +74,7 @@ pip install -r requirements.txt
 python manage.py makemigrations
 python manage.py migrate
 python manage.py runserver
-
+```
 
 
 Follow these simple steps to run SafarSetu on your local machine:
