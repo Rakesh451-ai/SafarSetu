@@ -32,5 +32,5 @@ COPY . /app/
 # Expose Django port
 EXPOSE 8000
 
-# Default command to run the development server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Default command to run the ASGI production server
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "safarsetu.asgi:application"]

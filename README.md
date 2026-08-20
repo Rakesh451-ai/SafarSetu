@@ -127,3 +127,38 @@ flake8 .
 # Run pre-commit across all files
 pre-commit run --all-files
 ```
+
+---
+
+## 🌐 Production Deployment
+
+SafarSetu comes pre-configured with multi-target production deployment options:
+
+### Option 1: 1-Click Render Deployment (`render.yaml`)
+1. Fork or push this repository to GitHub/GitLab.
+2. In Render, select **New + Blueprint** and point it to your repository.
+3. Render automatically provisions the ASGI web service, PostgreSQL database, Redis instance, and Celery workers.
+
+### Option 2: Production Docker Compose (`docker-compose.prod.yml`)
+Run a self-hosted full production stack (PostGIS + Redis + ASGI Daphne + Celery + Beat):
+
+```bash
+cp .env.production.example .env
+# Edit .env with your production secret key and domain
+docker compose -f docker-compose.prod.yml up --build -d
+```
+
+### Option 3: Railway / Fly.io / Heroku (`Procfile`, `railway.json`, `fly.toml`)
+- **Railway**: Connect your repo; Railway uses the `Dockerfile` and `railway.json`.
+- **Fly.io**: Run `fly launch` to automatically deploy using `fly.toml`.
+- **Heroku / Dokku**: Uses `Procfile` for `web`, `worker`, and `beat`.
+
+### Option 4: Native Linux Server / VPS (`deploy/setup_server.sh`)
+Provision and configure an Ubuntu/Debian server with Nginx, Systemd, PostgreSQL, and Redis:
+
+```bash
+chmod +x deploy/setup_server.sh
+sudo ./deploy/setup_server.sh
+```
+
+---

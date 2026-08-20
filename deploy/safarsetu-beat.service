@@ -1,0 +1,16 @@
+[Unit]
+Description=SafarSetu Celery Beat Periodic Scheduler Service
+After=network.target redis.service postgresql.service
+
+[Service]
+User=rakesh
+Group=rakesh
+WorkingDirectory=/home/rakesh/SafarSetu
+Environment="PATH=/home/rakesh/SafarSetu/.venv/bin"
+EnvironmentFile=/home/rakesh/SafarSetu/.env
+ExecStart=/home/rakesh/SafarSetu/.venv/bin/celery -A safarsetu beat -l INFO
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
