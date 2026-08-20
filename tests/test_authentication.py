@@ -307,3 +307,42 @@ class AuthenticationSystemTests(TestCase):
         # 3. Logout
         logout_resp = self.client.get(reverse("web:logout"))
         self.assertRedirects(logout_resp, reverse("web:home"))
+
+    def test_google_auth_api(self):
+        # 1. Test Google API Login with mock credential
+        payload = {
+            "credential": "test_google_credential",
+            "role": "TOURIST",
+        }
+        resp = self.client.post(
+            reverse("identity:google-auth"),
+            data=payload,
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertIn("tokens", data)
+        self.assertIn("user", data)
+        self.assertIn("tourist", data)
+        self.assertIn("digital_id", data)
+        self.assertEqual(data["user"]["email"], "traveler.google@gmail.com")
+
+        # Verify Tourist and Digital ID created
+        user = User.objects.get(email="traveler.google@gmail.com")
+        self.assertTrue(hasattr(user, "tourist_profile"))
+        self.assertTrue(
+            DigitalID.objects.filter(
+                tourist=user.tourist_profile, is_active=True
+            ).exists()
+        )
+
+    def test_google_web_auth_and_demo(self):
+        # 1. Test 1-Click Demo Google Web Sign-In
+        resp = self.client.get(reverse("web:google-demo"))
+        self.assertRedirects(resp, reverse("web:home"))
+        self.assertTrue(User.objects.filter(email="traveler.google@gmail.com").exists())
+
+        # Check authenticated session in profile view
+        prof_resp = self.client.get(reverse("web:profile"))
+        self.assertEqual(prof_resp.status_code, 200)
+        self.assertContains(prof_resp, "traveler.google@gmail.com")

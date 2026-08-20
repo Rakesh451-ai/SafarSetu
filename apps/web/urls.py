@@ -22,6 +22,8 @@ urlpatterns = [
     path("login/", views.login_view, name="login"),
     path("register/", views.register_view, name="register"),
     path("logout/", views.logout_view, name="logout"),
+    path("auth/google/", views.google_auth_view, name="google-auth"),
+    path("auth/google/demo/", views.google_demo_view, name="google-demo"),
     path("demo-login/<str:role>/", views.demo_login_view, name="demo-login"),
     # Direct Action Endpoints
     path("api/simulate-scan/", views.simulate_scan_api, name="simulate-scan"),

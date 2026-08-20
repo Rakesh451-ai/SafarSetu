@@ -1,0 +1,47 @@
+{% load static %}
+<div class="modal-backdrop" id="logout-modal-backdrop">
+  <div class="modal-sheet" style="text-align: center; max-width: 360px; border-radius: 20px; padding: 24px 20px;">
+    <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--zone-danger-bg); color: var(--zone-danger); display: inline-flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 12px; border: 2px solid var(--zone-danger-border);">
+      🚪
+    </div>
+    <h3 style="font-size: 18px; font-weight: 800; color: var(--gov-navy-900); margin-bottom: 6px;">Sign Out of SafarSetu?</h3>
+    <p style="font-size: 12px; color: var(--text-muted); line-height: 1.4; margin-bottom: 20px;">
+      Are you sure you want to end your active session on this device?
+    </p>
+
+    <div style="display: flex; gap: 10px;">
+      <button
+        type="button"
+        onclick="document.getElementById('logout-modal-backdrop').classList.remove('active')"
+        style="flex: 1; height: 42px; border-radius: 10px; border: 1px solid var(--border); background: #FFFFFF; font-size: 13px; font-weight: 700; color: var(--text-main); cursor: pointer;"
+      >
+        Cancel
+      </button>
+      <a
+        href="{% url 'web:logout' %}"
+        id="btn-confirm-logout"
+        onclick="handleLogoutConfirm(this)"
+        style="flex: 1; height: 42px; border-radius: 10px; background: var(--zone-danger); color: #FFFFFF; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);"
+      >
+        Yes, Sign Out
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+function openLogoutModal() {
+  const modal = document.getElementById('logout-modal-backdrop');
+  if (modal) modal.classList.add('active');
+  const drawer = document.getElementById('drawer-backdrop');
+  if (drawer) drawer.classList.remove('active');
+}
+
+function handleLogoutConfirm(btn) {
+  try {
+    localStorage.removeItem('safarsetu_token');
+    localStorage.removeItem('safarsetu_refresh');
+  } catch(e) {}
+  btn.textContent = "Signing out...";
+}
+</script>

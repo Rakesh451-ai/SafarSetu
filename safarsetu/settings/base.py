@@ -148,13 +148,18 @@ WSGI_APPLICATION = "safarsetu.wsgi.application"
 ASGI_APPLICATION = "safarsetu.asgi.application"
 
 # Database Configuration using django-environ
-# Supports postgres://, postgis://, sqlite:///, etc.
+# Defaults to SQLite (zero-config, free and easily deployable on any platform!)
+# Automatically connects to PostgreSQL / Supabase / Neon if DATABASE_URL is set.
 DATABASES = {
     "default": env.db(
         "DATABASE_URL",
-        default="postgres://safarsetu_user:safarsetu_password@localhost:5432/safarsetu",
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
     )
 }
+
+# Google OAuth2 Authentication Settings
+GOOGLE_OAUTH_CLIENT_ID = env.str("GOOGLE_OAUTH_CLIENT_ID", default="")
+GOOGLE_OAUTH_CLIENT_SECRET = env.str("GOOGLE_OAUTH_CLIENT_SECRET", default="")
 
 # Redis Cache Configuration
 CACHES = {

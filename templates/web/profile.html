@@ -162,7 +162,7 @@
       <div style="font-size:13px; font-weight:600; color:var(--zone-danger);">Sign Out of SafarSetu</div>
       <div style="font-size:11px; color:var(--text-muted);">Logged in as @{{ user.username }}</div>
     </div>
-    <a href="{% url 'web:logout' %}" class="action-pill-btn" style="text-decoration:none; font-size:11px; padding:4px 12px; background:var(--zone-danger-bg); color:var(--zone-danger-text); border:1px solid var(--zone-danger-border);">
+    <a href="{% url 'web:logout' %}" onclick="event.preventDefault(); openLogoutModal();" class="action-pill-btn" style="text-decoration:none; font-size:11px; padding:4px 12px; background:var(--zone-danger-bg); color:var(--zone-danger-text); border:1px solid var(--zone-danger-border); cursor:pointer;">
       Sign Out
     </a>
   </div>

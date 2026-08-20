@@ -1,7 +1,10 @@
+from django.conf import settings
+
+
 def auth_user_context(request):
     """
     Context processor that supplies authenticated user profile, active Digital ID,
-    guide profile, and role state to every HTML template.
+    guide profile, role state, and Google OAuth configuration to every HTML template.
     """
     context = {
         "current_user": getattr(request, "user", None),
@@ -13,6 +16,7 @@ def auth_user_context(request):
         "current_digital_id": None,
         "current_guide": None,
         "user_role": None,
+        "google_oauth_client_id": getattr(settings, "GOOGLE_OAUTH_CLIENT_ID", ""),
     }
 
     if hasattr(request, "user") and request.user.is_authenticated:

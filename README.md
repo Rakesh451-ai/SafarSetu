@@ -2,35 +2,42 @@
 
 [![Django](https://img.shields.io/badge/Django-5.1.6-092E20?style=for-the-badge&logo=django&logoColor=white)](https://www.djangoproject.com/)
 [![DRF](https://img.shields.io/badge/Django_REST_Framework-3.15.2-red?style=for-the-badge&logo=django&logoColor=white)](https://www.django-rest-framework.org/)
+[![Google Sign-In](https://img.shields.io/badge/Google-Sign--In%20OAuth2-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://developers.google.com/identity)
 [![SimpleJWT](https://img.shields.io/badge/JWT-SimpleJWT%205.3.1-black?style=for-the-badge&logo=json-web-tokens&logoColor=white)](https://django-rest-framework-simplejwt.readthedocs.io/)
+[![Database](https://img.shields.io/badge/Database-SQLite%20%7C%20PostgreSQL%20%7C%20Supabase-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
 [![Python](https://img.shields.io/badge/Python-3.12+-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 
-**SafarSetu** is a comprehensive, modern tourist safety, digital identity, and smart exploration platform built with **Django 5** and **Django REST Framework (DRF)**. It combines cryptographic Digital Tourist IDs, real-time geofenced Safety Radar, 1-tap SOS emergency dispatch, verified tour guide bookings, and an AI-powered travel assistant into a mobile-first Progressive Web Application (PWA).
+**SafarSetu** is a modern, interactive tourist safety, digital identity, and smart exploration platform built with **Django 5** and **Django REST Framework (DRF)**. It combines cryptographic Digital Tourist IDs, real-time geofenced Safety Radar, 1-tap SOS emergency dispatch, verified tour guide bookings, and an AI-powered travel assistant into a mobile-first Progressive Web Application (PWA).
 
 ---
 
-## ✨ Features
+## ✨ Key Features & Capabilities
 
+- 🔐 **Modern & Interactive Authentication**:
+  - **Login with Google**: Seamless "Continue with Google" OAuth2 authentication and Google Identity Services (GSI) support with instant automatic digital pass generation.
+  - **Dual Email or Username**: Log in with either your registered username or email address (case-insensitive).
+  - **Interactive UI**: Show/hide password toggles, animated loading submit states, and clean validation error banners.
+  - **Interactive Sign-Out Modal**: Confirms session termination with animated modal sheet and safe token clearing.
+  - **⚡ 1-Click Fast Demo Login**: Quick-access one-click evaluator logins for **Tourist**, **Tour Guide**, **Emergency Responder (112)**, and **Admin**.
 - 🪪 **Cryptographic Digital Tourist ID**: Generates tamper-evident, PyJWT SHA-256 signed QR code passes for tourists and monument check-ins.
-- 🔐 **Modern Multi-Role Authentication**: Seamless dual authentication via Web Sessions and REST SimpleJWT tokens (with custom role & profile claims). Supports login via **Username OR Email**.
-- ⚡ **1-Click Demo Evaluation**: Instant demo login buttons for **Tourist**, **Local Guide**, **Emergency Responder (112)**, and **Administrator**.
 - 📡 **Safety Radar & Geofencing**: Real-time GPS location ingestion, 3-tier risk zone classification (*Safe*, *Caution*, *Danger*), and boundary transition alerts.
 - 🚨 **1-Tap Emergency SOS (112)**: Instant distress broadcasting to police command centers, automated dispatch tracking, and emergency contact SMS notifications.
 - 🏛️ **Verified Guide Directory & Bookings**: Browse government-verified local guides, explore curated tour packages, and manage bookings.
 - 🤖 **AI Travel Assistant & RAG**: Instant conversational assistance for itinerary generation, safety advisories, and historical monument details.
 - 📱 **Mobile-First Responsive PWA**: Dark navy & gold Rajasthan aesthetic, installable Web App Manifest, offline service workers, and interactive maps.
+- 🆓 **Zero-Cost Free Tier Database Support**: Built-in **SQLite** default requires zero external database servers, zero cost, and runs out-of-the-box on Render, Railway, Fly.io, PythonAnywhere, or any free hosting platform. Automatically switches to **PostgreSQL / Supabase / Neon** when `DATABASE_URL` is set.
 
 ---
 
 ## 🏗️ Architecture: Modular Monolith
 
-The codebase is organized into bounded domain contexts under the `apps/` directory:
+The codebase is organized into clean domain modules under `apps/`:
 
 ```
 SafarSetu/
 ├── apps/
-│   ├── identity/        # Auth, JWT, User Profiles, Digital ID passes, QR service
+│   ├── identity/        # Auth, Google OAuth2, SimpleJWT, User Profiles, Digital Pass QR
 │   ├── guide/           # Verified tour guides, tour packages, bookings
 │   ├── tracking/        # GPS telemetry, geofencing, hazard zones
 │   ├── sos/             # Emergency SOS incidents, check-in schedules, dispatch
@@ -41,13 +48,13 @@ SafarSetu/
 │   ├── adminpanel/      # Command center metrics, incident triage, audit logs
 │   └── web/             # PWA views, mobile templates, AJAX endpoints
 ├── safarsetu/
-│   ├── settings/        # base.py, dev.py, prod.py
+│   ├── settings/        # base.py (SQLite default + PostgreSQL fallback), dev.py, prod.py
 │   ├── asgi.py          # ASGI application entrypoint (Daphne & Channels)
 │   ├── wsgi.py          # WSGI application entrypoint
 │   └── urls.py          # Central routing & OpenAPI documentation
 ├── static/              # CSS, JavaScript, PWA assets, icons
-├── templates/           # Mobile-first responsive HTML templates
-├── tests/               # Comprehensive automated test suite (56 tests)
+├── templates/           # Mobile-first responsive HTML templates & modal components
+├── tests/               # Automated test suite (58 tests, 100% passing)
 ├── Dockerfile           # Multi-stage production & development Dockerfile
 ├── docker-compose.yml   # Multi-container orchestration (PostGIS, Redis, Django)
 ├── manage.py
@@ -60,24 +67,7 @@ SafarSetu/
 
 ## 🚀 How to Run on Local Server
 
-### Run this command to run on local server
-
-Clone the repo 
-```bash
-git clone https://github.com/Rakesh451-ai/SafarSetu.git
-cd SafarSetu
-python -m venv venv
-source venv/bin/activate   -- it is for linux   
-venv\scripts\activate  -- for windows 
-
-pip install -r requirements.txt
-python manage.py makemigrations
-python manage.py migrate
-python manage.py runserver
-```
-
-
-Follow these simple steps to run SafarSetu on your local machine:
+Follow these simple steps to run SafarSetu locally on your machine:
 
 ### Prerequisites
 
@@ -129,7 +119,7 @@ Copy the example environment file to `.env`:
 cp .env.example .env
 ```
 
-*(The default `.env` is already configured for local SQLite development without requiring external databases or Docker!)*
+*(The default `.env` is already configured for zero-setup SQLite development. No external database or Redis server is required to start!)*
 
 ---
 
@@ -141,9 +131,9 @@ python manage.py migrate
 
 ---
 
-### Step 6: Initialize Demo Accounts
+### Step 6: Initialize Demo User Accounts
 
-Run the built-in demo provisioning command to set up test accounts across all roles:
+Run the built-in demo provisioning command to set up test accounts for all roles:
 
 ```bash
 python manage.py setup_auth_demo
@@ -157,17 +147,18 @@ python manage.py setup_auth_demo
 python manage.py runserver
 ```
 
-Open your browser and visit:
+Open your browser and navigate to:
 👉 **[http://127.0.0.1:8000/](http://127.0.0.1:8000/)**
 
 ---
 
-## 👥 Demo Login Credentials
+## 🔑 Login & Evaluation Credentials
 
-For quick evaluation, you can use the **⚡ 1-Click Fast Demo Login** buttons on the login page or enter these credentials:
+You can sign in with **Google**, use the **⚡ 1-Click Fast Demo Login** buttons on `/login/`, or enter credentials manually:
 
-| Role | Username / Email | Password | Description |
+| Role | Username / Email | Password | Details |
 | :--- | :--- | :--- | :--- |
+| **🌐 Google User** | `Continue with Google` button | *(Google Account)* | Instant Verified Tourist Pass & QR |
 | **🧭 Tourist** | `tourist_demo` or `tourist@safarsetu.gov.in` | `Tourist123!` | Alex Morgan (Aadhaar Verified Digital Pass) |
 | **🏛️ Tour Guide** | `guide_demo` or `guide@safarsetu.gov.in` | `Guide123!` | Rajesh Kumar (Govt Verified Guide, 8 yrs exp) |
 | **🚨 Responder** | `responder_demo` or `responder@safarsetu.gov.in` | `Responder123!` | Inspector Vikram Singh (Jaipur Police 112) |
@@ -175,45 +166,44 @@ For quick evaluation, you can use the **⚡ 1-Click Fast Demo Login** buttons on
 
 ---
 
-## 🐳 Alternative Setup: Docker Compose
+## ☁️ Zero-Cost Free Database Deployment
 
-If you have Docker installed, you can spin up the full stack (Django + PostgreSQL with PostGIS + Redis) in one command:
+SafarSetu is optimized to deploy **completely free** on any cloud provider:
 
-```bash
-# Start all containers
-docker compose up --build
-
-# Run migrations inside container
-docker compose exec web python manage.py migrate
-
-# Initialize demo users
-docker compose exec web python manage.py setup_auth_demo
-```
-
-Access the app at `http://localhost:8000/`.
+1. **Default Zero-Config SQLite (Free Anywhere)**:
+   - Works natively out of the box with zero external database configuration.
+   - Ideal for single-instance free containers on **Render**, **Railway**, **Fly.io**, **PythonAnywhere**, or VPS.
+2. **Cloud PostgreSQL Free Tiers (Supabase / Neon / Aiven)**:
+   - Create a free database on [Supabase](https://supabase.com/) or [Neon](https://neon.tech/).
+   - Set the `DATABASE_URL` environment variable in your deployment dashboard:
+     ```env
+     DATABASE_URL=postgres://postgres:password@ep-sample-123.us-east-2.aws.neon.tech/neondb?sslmode=require
+     ```
+   - Django automatically connects to PostgreSQL with SSL encryption!
 
 ---
 
 ## 📚 API Documentation & Interactive Endpoints
 
-SafarSetu includes interactive OpenAPI 3.0 documentation powered by `drf-spectacular`:
+Interactive OpenAPI 3.0 documentation is powered by `drf-spectacular`:
 
 - **Swagger UI**: [http://127.0.0.1:8000/api/docs/](http://127.0.0.1:8000/api/docs/)
 - **ReDoc**: [http://127.0.0.1:8000/api/redoc/](http://127.0.0.1:8000/api/redoc/)
 - **OpenAPI Schema (YAML)**: [http://127.0.0.1:8000/api/schema/](http://127.0.0.1:8000/api/schema/)
 - **Health Check**: [http://127.0.0.1:8000/api/health/](http://127.0.0.1:8000/api/health/)
 
-### Key API Endpoints (`/api/v1/`):
+### Key Authentication & Core Endpoints (`/api/v1/`):
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `POST` | `/api/v1/auth/login/` | Obtain JWT access/refresh tokens and user profile |
+| `POST` | `/api/v1/auth/google/` | Sign in with Google ID token / credential |
+| `POST` | `/api/v1/auth/login/` | Obtain SimpleJWT tokens and user profile |
 | `POST` | `/api/v1/auth/register/` | Unified registration for Tourists, Guides, and Staff |
-| `GET` | `/api/v1/auth/me/` | Current authenticated user profile & active pass |
+| `GET` | `/api/v1/auth/me/` | Current user profile, active digital pass, and role |
 | `PATCH`| `/api/v1/auth/profile/` | Update profile information and emergency contacts |
 | `POST` | `/api/v1/auth/change-password/` | Update password securely |
-| `POST` | `/api/v1/auth/logout/` | Blacklist refresh token & logout session |
-| `GET` | `/api/v1/id/<uuid:tourist_id>/qr/` | Retrieve signed PyJWT token & base64 PNG QR code |
+| `POST` | `/api/v1/auth/logout/` | Blacklist refresh token & clear session |
+| `GET` | `/api/v1/id/<uuid:tourist_id>/qr/` | Signed PyJWT token & base64 PNG QR pass |
 | `POST` | `/api/v1/location/ping/` | Ingest live GPS coordinate telemetry ping |
 | `GET` | `/api/v1/zones/` | GeoJSON export of monitored safety and danger zones |
 | `POST` | `/api/v1/sos/` | Trigger immediate 1-tap SOS distress alert |
@@ -225,15 +215,15 @@ SafarSetu includes interactive OpenAPI 3.0 documentation powered by `drf-spectac
 
 ---
 
-## 🧪 Running Automated Tests
+## 🧪 Automated Testing
 
-Run the complete automated test suite (56 tests covering authentication, digital IDs, GPS tracking, SOS dispatch, guides, listings, and assistant):
+Run the automated test suite across all modules:
 
 ```bash
 python manage.py test
 ```
 
-To run only the authentication test suite:
+To run only the authentication test suite (including Google Sign-In):
 
 ```bash
 python manage.py test tests.test_authentication
@@ -253,15 +243,6 @@ isort .
 # Lint with Flake8
 flake8 .
 ```
-
----
-
-## 🌐 Production Deployment Options
-
-- **Render**: Connect repository and deploy via [`render.yaml`](render.yaml) blueprint.
-- **Production Docker Compose**: Run `docker compose -f docker-compose.prod.yml up -d`.
-- **Railway / Fly.io / Heroku**: Pre-configured with [`Procfile`](Procfile), [`railway.json`](railway.json), and [`fly.toml`](fly.toml).
-- **Ubuntu/Debian VPS**: Automated Systemd and Nginx deployment script in [`deploy/setup_server.sh`](deploy/setup_server.sh).
 
 ---
 

@@ -7,6 +7,7 @@ from .views import (
     CurrentUserView,
     CustomTokenObtainPairView,
     EmergencyContactCreateView,
+    GoogleAuthAPIView,
     IdentityStatusView,
     LogoutAPIView,
     RegisterView,
@@ -23,6 +24,7 @@ urlpatterns = [
     path("status/", IdentityStatusView.as_view(), name="status"),
     # Modern Auth API endpoints
     path("login/", CustomTokenObtainPairView.as_view(), name="login"),
+    path("google/", GoogleAuthAPIView.as_view(), name="google-auth"),
     path("register/", UnifiedRegisterView.as_view(), name="auth-register"),
     path("logout/", LogoutAPIView.as_view(), name="logout"),
     path("me/", CurrentUserDetailsView.as_view(), name="me"),

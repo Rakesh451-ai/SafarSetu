@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from .google_auth import get_or_create_google_user, verify_google_id_token
 from .models import DigitalID, EmergencyContact, Tourist, UserProfile, UserRole
 from .qr_service import generate_qr_png_bytes, verify_qr_token
 from .serializers import (
@@ -58,6 +59,72 @@ class PNGImageRenderer(BaseRenderer):
 )
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+
+
+@extend_schema(
+    tags=["Identity & Auth"],
+    summary="Google OAuth2 / One Tap Login",
+    description=(
+        "Authenticates a user via a Google ID token / credential. "
+        "Automatically links or creates the User, issues PyJWT Digital ID, and returns SimpleJWT tokens."
+    ),
+    responses={
+        200: OpenApiResponse(
+            description="Google sign-in successful with tokens and user details."
+        ),
+        400: OpenApiResponse(description="Invalid or expired Google credential."),
+    },
+)
+class GoogleAuthAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        token = (
+            request.data.get("credential")
+            or request.data.get("id_token")
+            or request.data.get("token")
+        )
+        role = request.data.get("role", UserRole.TOURIST)
+
+        if not token:
+            return Response(
+                {"error": "Google credential / id_token is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            google_info = verify_google_id_token(token)
+            auth_result = get_or_create_google_user(google_info, role=role)
+            user = auth_result["user"]
+            profile = auth_result["profile"]
+            tokens = auth_result["tokens"]
+            tourist = auth_result["tourist"]
+            digital_id = auth_result["digital_id"]
+
+            resp = {
+                "message": (
+                    "Signed in with Google successfully."
+                    if not auth_result["is_created"]
+                    else "Google account registered and digital pass generated."
+                ),
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                    "full_name": user.get_full_name() or user.username,
+                    "role": profile.role,
+                    "is_verified": profile.is_verified,
+                },
+                "tokens": tokens,
+            }
+            if tourist:
+                resp["tourist"] = TouristSerializer(tourist).data
+            if digital_id:
+                resp["digital_id"] = DigitalIDSerializer(digital_id).data
+
+            return Response(resp, status=status.HTTP_200_OK)
+        except Exception as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @extend_schema(
