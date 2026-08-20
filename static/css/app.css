@@ -1158,6 +1158,12 @@ body {
   padding: 0 12px;
   font-size: 14px;
   outline: none;
+  background-color: #FFFFFF;
+  transition: all 0.2s ease;
+}
+.form-control:focus {
+  border-color: var(--gov-navy-700);
+  box-shadow: 0 0 0 3px rgba(30, 62, 98, 0.15);
 }
 .btn-primary {
   width: 100%;
@@ -1169,4 +1175,16 @@ body {
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-primary:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+.demo-chip-btn {
+  transition: all 0.15s ease;
+}
+.demo-chip-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(0.95);
 }

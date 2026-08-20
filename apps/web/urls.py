@@ -5,6 +5,7 @@ from . import views
 app_name = "web"
 
 urlpatterns = [
+    # Onboarding & Core Navigation
     path("", views.onboarding_view, name="onboarding"),
     path("home/", views.home_view, name="home"),
     path("scan/", views.scan_view, name="scan"),
@@ -17,6 +18,11 @@ urlpatterns = [
     path("guides/<int:pk>/", views.guide_detail_view, name="guide-detail"),
     path("listings/", views.listings_view, name="listings"),
     path("profile/", views.profile_view, name="profile"),
+    # Authentication & Onboarding Routes
+    path("login/", views.login_view, name="login"),
+    path("register/", views.register_view, name="register"),
+    path("logout/", views.logout_view, name="logout"),
+    path("demo-login/<str:role>/", views.demo_login_view, name="demo-login"),
     # Direct Action Endpoints
     path("api/simulate-scan/", views.simulate_scan_api, name="simulate-scan"),
     path("api/update-pass/", views.update_pass_api, name="update-pass"),

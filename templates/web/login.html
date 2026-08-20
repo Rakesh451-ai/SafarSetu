@@ -1,0 +1,167 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Sign In | SafarSetu Official Tourist & Guide Portal{% endblock %}
+
+{% block content %}
+<div class="auth-page-container" style="min-height: calc(100vh - 100px); display:flex; flex-direction:column; justify-content:center; padding: 12px 6px;">
+
+  <!-- Main Auth Card -->
+  <div style="background: #FFFFFF; border: 1px solid var(--border); border-radius: 20px; padding: 26px 20px; box-shadow: var(--shadow-lg);">
+
+    <!-- Top Branding Emblem -->
+    <div style="text-align: center; margin-bottom: 20px;">
+      <div style="width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, #071326 0%, #1E3E62 100%); color: var(--gov-gold); display: inline-flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: 0 4px 12px rgba(7, 19, 38, 0.25); border: 2px solid var(--gov-gold); margin-bottom: 10px;">
+        🧭
+      </div>
+      <h1 style="font-size: 22px; font-weight: 800; color: var(--gov-navy-900); letter-spacing: -0.5px; margin-bottom: 4px;">Sign In to SafarSetu</h1>
+      <div style="font-size: 11px; font-weight: 700; color: var(--gov-gold); text-transform: uppercase; letter-spacing: 0.5px;">
+        Ministry of Tourism • Government of India
+      </div>
+    </div>
+
+    <!-- Error Alert if present -->
+    {% if error_message %}
+    <div style="background: var(--zone-danger-bg); border: 1px solid var(--zone-danger-border); color: var(--zone-danger-text); border-radius: 10px; padding: 10px 14px; font-size: 12px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+      <span>⚠️</span>
+      <div>{{ error_message }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Django Messages -->
+    {% if messages %}
+    <div style="margin-bottom: 14px;">
+      {% for message in messages %}
+      <div style="background: {% if message.tags == 'error' %}var(--zone-danger-bg){% else %}var(--zone-safe-bg){% endif %}; border: 1px solid {% if message.tags == 'error' %}var(--zone-danger-border){% else %}var(--zone-safe-border){% endif %}; color: {% if message.tags == 'error' %}var(--zone-danger-text){% else %}var(--zone-safe-text){% endif %}; border-radius: 10px; padding: 10px 14px; font-size: 12px; font-weight: 600; margin-bottom: 6px;">
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Login Form -->
+    <form method="POST" action="{% url 'web:login' %}" id="loginForm">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+
+      <!-- Username or Email -->
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label class="form-label" for="id_username" style="display:flex; justify-content:space-between;">
+          <span>Username or Email</span>
+          <span style="font-size:10px; color:var(--text-muted);">यूज़रनेम / ईमेल</span>
+        </label>
+        <div style="position:relative; display:flex; align-items:center;">
+          <span style="position:absolute; left:12px; color:#94A3B8; font-size:16px;">👤</span>
+          <input
+            type="text"
+            name="username"
+            id="id_username"
+            class="form-control"
+            placeholder="e.g. tourist_demo or user@example.com"
+            required
+            autocomplete="username"
+            style="padding-left: 38px; height: 46px; border-radius: 10px;"
+          >
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group" style="margin-bottom: 18px;">
+        <label class="form-label" for="id_password" style="display:flex; justify-content:space-between;">
+          <span>Password</span>
+          <span style="font-size:10px; color:var(--text-muted);">पासवर्ड</span>
+        </label>
+        <div style="position:relative; display:flex; align-items:center;">
+          <span style="position:absolute; left:12px; color:#94A3B8; font-size:16px;">🔒</span>
+          <input
+            type="password"
+            name="password"
+            id="id_password"
+            class="form-control"
+            placeholder="••••••••••••"
+            required
+            autocomplete="current-password"
+            style="padding-left: 38px; padding-right: 42px; height: 46px; border-radius: 10px;"
+          >
+          <button
+            type="button"
+            id="btn-toggle-pwd"
+            onclick="togglePasswordVisibility('id_password', this)"
+            aria-label="Toggle password visibility"
+            style="position:absolute; right:10px; background:none; border:none; color:#94A3B8; cursor:pointer; font-size:16px; padding:4px;"
+          >
+            👁️
+          </button>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button
+        type="submit"
+        class="btn-primary"
+        style="height: 48px; font-size: 15px; font-weight: 800; border-radius: 12px; background: linear-gradient(135deg, #071326 0%, #1E3E62 100%); color: #FFFFFF; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(7, 19, 38, 0.3); border: none;"
+      >
+        <span>Sign In Securely</span>
+        <span>→</span>
+      </button>
+    </form>
+
+    <!-- 1-Click Fast Demo Login for Quick Evaluation -->
+    <div style="margin-top: 22px; padding-top: 18px; border-top: 1px dashed var(--border);">
+      <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; text-align: center;">
+        ⚡ Instant 1-Click Demo Login
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+        <a href="{% url 'web:demo-login' 'tourist' %}" class="demo-chip-btn" style="text-decoration:none; background: var(--zone-safe-bg); border: 1px solid var(--zone-safe-border); color: var(--zone-safe-text); padding: 8px 10px; border-radius: 10px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 6px; justify-content: center;">
+          <span>🧭</span>
+          <span>Tourist (Alex)</span>
+        </a>
+        <a href="{% url 'web:demo-login' 'guide' %}" class="demo-chip-btn" style="text-decoration:none; background: var(--verified-bg); border: 1px solid var(--verified-border); color: var(--verified-badge); padding: 8px 10px; border-radius: 10px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 6px; justify-content: center;">
+          <span>🏛️</span>
+          <span>Guide (Rajesh)</span>
+        </a>
+        <a href="{% url 'web:demo-login' 'responder' %}" class="demo-chip-btn" style="text-decoration:none; background: var(--zone-danger-bg); border: 1px solid var(--zone-danger-border); color: var(--zone-danger-text); padding: 8px 10px; border-radius: 10px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 6px; justify-content: center;">
+          <span>🚨</span>
+          <span>Responder (112)</span>
+        </a>
+        <a href="{% url 'web:demo-login' 'admin' %}" class="demo-chip-btn" style="text-decoration:none; background: var(--zone-caution-bg); border: 1px solid var(--zone-caution-border); color: var(--zone-caution-text); padding: 8px 10px; border-radius: 10px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 6px; justify-content: center;">
+          <span>⚙️</span>
+          <span>Admin Portal</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Create Account Link -->
+    <div style="text-align: center; margin-top: 18px;">
+      <span style="font-size: 13px; color: var(--text-muted);">New to SafarSetu? </span>
+      <a href="{% url 'web:register' %}" style="font-size: 13px; font-weight: 700; color: var(--gov-navy-700); text-decoration: underline;">
+        Create an Account →
+      </a>
+    </div>
+
+  </div>
+
+  <!-- Guest fallback -->
+  <div style="text-align: center; margin-top: 14px;">
+    <a href="{% url 'web:home' %}" style="font-size: 12px; color: #94A3B8; text-decoration: none;">
+      ← Continue exploring as Guest
+    </a>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function togglePasswordVisibility(fieldId, btn) {
+  const input = document.getElementById(fieldId);
+  if (input.type === "password") {
+    input.type = "text";
+    btn.textContent = "🙈";
+  } else {
+    input.type = "password";
+    btn.textContent = "👁️";
+  }
+}
+</script>
+{% endblock %}

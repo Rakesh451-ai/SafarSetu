@@ -3,22 +3,70 @@ import uuid
 from datetime import timedelta
 
 from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.guide.models import GuideBooking, GuideProfile
+from apps.identity.demo_service import get_or_create_demo_user
 from apps.identity.models import DigitalID, EmergencyContact, IDProofType, Tourist
 from apps.identity.qr_service import create_or_rotate_digital_id, validate_qr_signature
+from apps.identity.serializers import UnifiedAuthRegisterSerializer
 from apps.listings.models import Listing, ListingType
 from apps.poi.models import POI
 from apps.sos.models import CheckInSchedule, SOSEvent, SOSStatus, SOSTriggerType
 from apps.tracking.models import LocationPing, Zone
 
 
-def get_default_tourist():
-    tourist = Tourist.objects.first()
+def get_default_tourist(request=None):
+    """
+    Retrieves the tourist profile and active digital ID for the current request.
+    If the user is authenticated and has a Tourist profile, returns their profile.
+    Otherwise, returns or creates a clean default guest profile.
+    """
+    if request and hasattr(request, "user") and request.user.is_authenticated:
+        tourist = getattr(request.user, "tourist_profile", None)
+        if tourist:
+            digital_id = tourist.digital_ids.filter(is_active=True).first()
+            if not digital_id:
+                digital_id = create_or_rotate_digital_id(tourist)
+            return tourist, digital_id
+
+        # If user has no tourist profile yet, create/link one for them
+        user = request.user
+        full_name = user.get_full_name() or user.username
+        profile = getattr(user, "profile", None)
+        phone = (
+            profile.phone_number
+            if profile and profile.phone_number
+            else "+91 98765 43210"
+        )
+
+        tourist, _ = Tourist.objects.get_or_create(
+            user=user,
+            defaults={
+                "name": full_name,
+                "nationality": "India",
+                "id_proof_type": IDProofType.AADHAAR,
+                "id_proof_number": "XXXX-XXXX-8942",
+                "phone": phone,
+                "current_region": "Jaipur",
+                "preferred_language": "en",
+                "trip_start": timezone.now().date(),
+                "trip_end": (timezone.now() + timedelta(days=7)).date(),
+            },
+        )
+        digital_id = tourist.digital_ids.filter(is_active=True).first()
+        if not digital_id:
+            digital_id = create_or_rotate_digital_id(tourist)
+        return tourist, digital_id
+
+    # Guest / Unauthenticated Fallback
+    tourist = Tourist.objects.filter(name="Alex Morgan").first()
     if not tourist:
         tourist = Tourist.objects.create(
             name="Alex Morgan",
@@ -31,15 +79,224 @@ def get_default_tourist():
             trip_start=timezone.now().date(),
             trip_end=(timezone.now() + timedelta(days=7)).date(),
         )
-    # Ensure active digital id
     digital_id = DigitalID.objects.filter(tourist=tourist, is_active=True).first()
     if not digital_id:
         digital_id = create_or_rotate_digital_id(tourist)
     return tourist, digital_id
 
 
+# ==========================================
+# Authentication Web Views
+# ==========================================
+
+
+def login_view(request):
+    """
+    Modern, glassmorphic login view supporting Username OR Email authentication.
+    Supports regular form submission as well as AJAX login with JWT token issuance.
+    """
+    if request.user.is_authenticated:
+        return redirect("web:home")
+
+    next_url = request.GET.get("next") or request.POST.get("next") or "/home/"
+    error_message = None
+
+    if request.method == "POST":
+        is_ajax = (
+            request.headers.get("x-requested-with") == "XMLHttpRequest"
+            or "application/json" in request.content_type
+        )
+        if is_ajax and request.body:
+            try:
+                body_data = json.loads(request.body)
+                username_or_email = body_data.get("username", "").strip()
+                password = body_data.get("password", "").strip()
+                next_url = body_data.get("next") or next_url
+            except Exception:
+                username_or_email = request.POST.get("username", "").strip()
+                password = request.POST.get("password", "").strip()
+        else:
+            username_or_email = request.POST.get("username", "").strip()
+            password = request.POST.get("password", "").strip()
+
+        if not username_or_email or not password:
+            error_message = "Please enter both username/email and password."
+        else:
+            user = authenticate(request, username=username_or_email, password=password)
+            if user is not None:
+                login(request, user)
+                refresh = RefreshToken.for_user(user)
+
+                if is_ajax:
+                    return JsonResponse(
+                        {
+                            "success": True,
+                            "redirect_url": next_url,
+                            "tokens": {
+                                "access": str(refresh.access_token),
+                                "refresh": str(refresh),
+                            },
+                            "user": {
+                                "id": user.id,
+                                "username": user.username,
+                                "full_name": user.get_full_name() or user.username,
+                                "role": getattr(
+                                    getattr(user, "profile", None), "role", "TOURIST"
+                                ),
+                            },
+                        }
+                    )
+
+                messages.success(
+                    request, f"Welcome back, {user.get_full_name() or user.username}!"
+                )
+                return redirect(next_url)
+            else:
+                error_message = "Invalid username/email or password. Please try again."
+
+        if is_ajax:
+            return JsonResponse({"success": False, "error": error_message}, status=400)
+
+    context = {
+        "active_nav": "login",
+        "next": next_url,
+        "error_message": error_message,
+        "hide_header": False,
+        "hide_nav": True,
+    }
+    return render(request, "web/login.html", context)
+
+
+def register_view(request):
+    """
+    Modern registration screen with interactive Role Tabs (Tourist vs Local Guide).
+    Automatically creates user accounts, profiles, and signed PyJWT Digital ID.
+    """
+    if request.user.is_authenticated:
+        return redirect("web:home")
+
+    next_url = request.GET.get("next") or request.POST.get("next") or "/home/"
+    error_message = None
+
+    if request.method == "POST":
+        is_ajax = (
+            request.headers.get("x-requested-with") == "XMLHttpRequest"
+            or "application/json" in request.content_type
+        )
+        if is_ajax and request.body:
+            try:
+                data = json.loads(request.body)
+            except Exception:
+                data = request.POST.dict()
+        else:
+            data = request.POST.dict()
+
+        serializer = UnifiedAuthRegisterSerializer(data=data)
+        if serializer.is_valid():
+            result = serializer.save()
+            user = result["user"]
+            login(
+                request,
+                user,
+                backend="apps.identity.auth_backend.EmailOrUsernameModelBackend",
+            )
+
+            tokens = result["tokens"]
+            if is_ajax:
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "redirect_url": next_url,
+                        "tokens": tokens,
+                        "user": {
+                            "username": user.username,
+                            "role": result["profile"].role,
+                        },
+                    }
+                )
+
+            messages.success(
+                request,
+                f"Welcome to SafarSetu, {user.get_full_name() or user.username}! Your digital identity pass has been generated.",
+            )
+            return redirect(next_url)
+        else:
+            errors = []
+            for field, field_errors in serializer.errors.items():
+                err_str = (
+                    " ".join(field_errors)
+                    if isinstance(field_errors, list)
+                    else str(field_errors)
+                )
+                errors.append(f"{field.replace('_', ' ').title()}: {err_str}")
+            error_message = " | ".join(errors)
+
+            if is_ajax:
+                return JsonResponse(
+                    {
+                        "success": False,
+                        "error": error_message,
+                        "errors": serializer.errors,
+                    },
+                    status=400,
+                )
+
+    context = {
+        "active_nav": "register",
+        "next": next_url,
+        "error_message": error_message,
+        "id_proof_choices": IDProofType.choices,
+        "hide_header": False,
+        "hide_nav": True,
+    }
+    return render(request, "web/register.html", context)
+
+
+def logout_view(request):
+    """
+    Logs out the current session and redirects safely with a message.
+    """
+    if request.user.is_authenticated:
+        name = request.user.get_full_name() or request.user.username
+        logout(request)
+        messages.info(
+            request,
+            f"You have been safely signed out. Thank you for using SafarSetu, {name}.",
+        )
+    return redirect("web:home")
+
+
+def demo_login_view(request, role="tourist"):
+    """
+    Instant 1-click login for demonstration and evaluation:
+    Roles: 'tourist', 'guide', 'responder', 'admin'.
+    """
+    user = get_or_create_demo_user(role)
+    login(
+        request, user, backend="apps.identity.auth_backend.EmailOrUsernameModelBackend"
+    )
+
+    role_title = {
+        "tourist": "Tourist Explorer",
+        "guide": "Govt Verified Guide",
+        "responder": "Emergency Responder",
+        "admin": "Tourism Administrator",
+    }.get(role.lower(), "User")
+
+    messages.success(
+        request,
+        f"⚡ Logged in as Demo {role_title}: {user.get_full_name() or user.username}",
+    )
+    return redirect("web:home")
+
+
+# ==========================================
+# Core App Views
+# ==========================================
+
+
 def onboarding_view(request):
-    """Splash / Onboarding screen with language selector and intro cards."""
+    """Splash / Onboarding screen with language selector and direct sign-in links."""
     return render(
         request,
         "web/onboarding.html",
@@ -51,7 +308,7 @@ def onboarding_view(request):
 
 def home_view(request):
     """Home Dashboard with greeting, search, 8 feature tiles, and popular destinations."""
-    tourist, digital_id = get_default_tourist()
+    tourist, digital_id = get_default_tourist(request)
 
     # Fetch curated POIs for Rajasthan
     pois = POI.objects.filter(is_active=True)[:6]
@@ -79,7 +336,7 @@ def home_view(request):
 
 def scan_view(request):
     """Scan QR & Digital Tourist ID pass screen."""
-    tourist, digital_id = get_default_tourist()
+    tourist, digital_id = get_default_tourist(request)
     pois = POI.objects.filter(is_active=True)
 
     context = {
@@ -125,7 +382,7 @@ def place_detail_view(request, identifier):
 
 def assistant_view(request):
     """AI Tourist Guide & Safe Itinerary Chat."""
-    tourist, _ = get_default_tourist()
+    tourist, _ = get_default_tourist(request)
     place_query = request.GET.get("place", "")
 
     context = {
@@ -138,7 +395,7 @@ def assistant_view(request):
 
 def radar_view(request):
     """Safety Radar & Navigation Map with geofenced zones and alerts."""
-    tourist, _ = get_default_tourist()
+    tourist, _ = get_default_tourist(request)
     zones = Zone.objects.all()
     recent_pings = LocationPing.objects.filter(tourist=tourist)[:5]
 
@@ -182,7 +439,7 @@ def radar_view(request):
 
 def sos_view(request):
     """Emergency SOS 24x7 Assistance Screen."""
-    tourist, _ = get_default_tourist()
+    tourist, _ = get_default_tourist(request)
     contacts = EmergencyContact.objects.filter(tourist=tourist)
     if not contacts.exists():
         EmergencyContact.objects.create(
@@ -230,7 +487,7 @@ def guide_detail_view(request, pk):
     """Individual Verified Guide Detail & Booking."""
     guide = get_object_or_404(GuideProfile, pk=pk)
     packages = guide.tour_packages.all()
-    tourist, _ = get_default_tourist()
+    tourist, _ = get_default_tourist(request)
 
     context = {
         "active_nav": "guides",
@@ -263,23 +520,36 @@ def listings_view(request):
 
 
 def profile_view(request):
-    """Tourist Profile, Bookings, Stats, and Settings."""
-    tourist, digital_id = get_default_tourist()
+    """
+    Tourist / User Profile, Bookings, Stats, Digital ID, and Account Settings.
+    Reflects the actual authenticated user state or a preview for guests.
+    """
+    tourist, digital_id = get_default_tourist(request)
     bookings = GuideBooking.objects.filter(tourist=tourist)
     contacts = EmergencyContact.objects.filter(tourist=tourist)
     sos_history = SOSEvent.objects.filter(tourist=tourist)[:5]
 
+    guide_profile = None
+    if request.user.is_authenticated:
+        guide_profile = getattr(request.user, "guide_profile", None)
+
     context = {
         "active_nav": "profile",
+        "user": request.user,
         "tourist": tourist,
         "digital_id": digital_id,
+        "guide_profile": guide_profile,
         "bookings": bookings,
         "emergency_contacts": contacts,
         "sos_history": sos_history,
         "stats": {
-            "trips": 12,
+            "trips": (
+                12
+                if not request.user.is_authenticated
+                else max(bookings.count() + 2, 1)
+            ),
             "places": 28,
-            "bookings": bookings.count() or 8,
+            "bookings": bookings.count(),
             "points": 1200,
             "level": "Explorer Level 5",
         },
@@ -362,7 +632,7 @@ def update_pass_api(request):
     if request.method != "POST":
         return JsonResponse({"error": "POST method required"}, status=405)
 
-    tourist, _ = get_default_tourist()
+    tourist, _ = get_default_tourist(request)
     try:
         data = json.loads(request.body)
     except Exception:
@@ -402,7 +672,7 @@ def trigger_sos_api(request):
     if request.method != "POST":
         return JsonResponse({"error": "POST method required"}, status=405)
 
-    tourist, _ = get_default_tourist()
+    tourist, _ = get_default_tourist(request)
     try:
         data = json.loads(request.body)
     except Exception:

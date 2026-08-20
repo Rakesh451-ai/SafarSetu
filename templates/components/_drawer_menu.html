@@ -4,18 +4,52 @@
     <div class="drawer-header">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
         <span style="font-size:11px; font-weight:700; color:var(--gov-gold); text-transform:uppercase;">Official Tourist Portal</span>
-        <button id="btn-close-drawer" style="background:none; border:none; color:#FFF; font-size:20px; cursor:pointer;">✕</button>
+        <button id="btn-close-drawer" style="background:none; border:none; color:#FFF; font-size:20px; cursor:pointer;" aria-label="Close menu">✕</button>
       </div>
-      <div class="drawer-user">
-        <div class="drawer-avatar">AM</div>
-        <div>
-          <div class="drawer-name">Alex Morgan</div>
-          <div class="drawer-role">Explorer Level 5 • Verified ID</div>
+
+      {% if user.is_authenticated %}
+        <div class="drawer-user">
+          <div class="drawer-avatar">
+            {{ user.first_name|default:user.username|slice:":1"|upper }}{{ user.last_name|default:""|slice:":1"|upper }}
+          </div>
+          <div>
+            <div class="drawer-name">{{ user.get_full_name|default:user.username }}</div>
+            <div class="drawer-role">
+              {% if user_role == 'GUIDE' %}
+                Govt Verified Tour Guide
+              {% elif user_role == 'RESPONDER' %}
+                Emergency Responder (112)
+              {% elif user_role == 'ADMIN' %}
+                Tourism Administrator
+              {% else %}
+                Tourist Explorer • Verified ID
+              {% endif %}
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="verified-tag" style="background:rgba(255,255,255,0.15); color:#FFF; border-color:rgba(255,255,255,0.3);">
-        🛡️ Verified Digital Pass #8942
-      </div>
+        <div class="verified-tag" style="background:rgba(255,255,255,0.15); color:#FFF; border-color:rgba(255,255,255,0.3); margin-top:8px;">
+          {% if current_digital_id %}
+            🛡️ Verified Digital Pass #{{ current_digital_id.id_token|stringformat:"s"|slice:":8" }}
+          {% elif user_role == 'GUIDE' %}
+            🏛️ Guide License #{{ user.id|stringformat:"04d" }}
+          {% else %}
+            🛡️ Verified Account ({{ user.username }})
+          {% endif %}
+        </div>
+      {% else %}
+        <div style="background: rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; border: 1px solid rgba(255,255,255,0.15);">
+          <div style="font-size: 13px; font-weight: 700; color: #FFF; margin-bottom: 2px;">Welcome, Traveler!</div>
+          <div style="font-size: 11px; color: #CBD5E1; margin-bottom: 10px;">Sign in to access your Digital Tourist ID and SOS dispatch.</div>
+          <div style="display: flex; gap: 6px;">
+            <a href="{% url 'web:login' %}" style="flex:1; background: var(--gov-gold); color: #071326; font-size: 11px; font-weight: 700; padding: 6px; border-radius: 8px; text-decoration: none; text-align: center;">
+              Sign In
+            </a>
+            <a href="{% url 'web:register' %}" style="flex:1; background: rgba(255,255,255,0.2); color: #FFF; font-size: 11px; font-weight: 700; padding: 6px; border-radius: 8px; text-decoration: none; text-align: center;">
+              Register
+            </a>
+          </div>
+        </div>
+      {% endif %}
     </div>
 
     <div class="drawer-links">
@@ -49,8 +83,16 @@
       </a>
       <a href="{% url 'web:profile' %}" class="drawer-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-        <span>My Profile & Trips</span>
+        <span>My Profile & Passes</span>
       </a>
+
+      {% if user.is_authenticated %}
+        <div style="margin: 10px 0; border-top: 1px solid var(--border);"></div>
+        <a href="{% url 'web:logout' %}" class="drawer-link" style="color: var(--zone-danger);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          <span style="font-weight: 700;">Sign Out</span>
+        </a>
+      {% endif %}
     </div>
 
     <div style="padding:16px 20px; border-top:1px solid var(--border); font-size:11px; color:var(--text-muted);">

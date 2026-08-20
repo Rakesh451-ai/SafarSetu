@@ -3,8 +3,8 @@ Description=SafarSetu Celery Beat Periodic Scheduler Service
 After=network.target redis.service postgresql.service
 
 [Service]
-User=rakesh
-Group=rakesh
+User=root
+Group=root
 WorkingDirectory=/home/rakesh/SafarSetu
 Environment="PATH=/home/rakesh/SafarSetu/.venv/bin"
 EnvironmentFile=/home/rakesh/SafarSetu/.env

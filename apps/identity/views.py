@@ -1,3 +1,4 @@
+from django.contrib.auth import logout
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -6,14 +7,21 @@ from rest_framework import generics, permissions, status
 from rest_framework.renderers import BaseRenderer, BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .models import DigitalID, EmergencyContact, Tourist
+from .models import DigitalID, EmergencyContact, Tourist, UserProfile, UserRole
 from .qr_service import generate_qr_png_bytes, verify_qr_token
 from .serializers import (
+    ChangePasswordSerializer,
+    CustomTokenObtainPairSerializer,
+    DigitalIDSerializer,
     EmergencyContactSerializer,
     RegisterSerializer,
     TouristRegistrationSerializer,
     TouristSerializer,
+    UnifiedAuthRegisterSerializer,
+    UserProfileUpdateSerializer,
     UserSerializer,
 )
 
@@ -32,6 +40,246 @@ class PNGImageRenderer(BaseRenderer):
         if isinstance(data, bytes):
             return data
         return data
+
+
+@extend_schema(
+    tags=["Identity & Auth"],
+    summary="User Login (SimpleJWT & Claims)",
+    description=(
+        "Authenticates a user via Username OR Email and password. "
+        "Returns SimpleJWT access/refresh tokens and user profile details."
+    ),
+    responses={
+        200: OpenApiResponse(
+            description="Login successful with tokens and user details."
+        ),
+        401: OpenApiResponse(description="Invalid credentials."),
+    },
+)
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+
+@extend_schema(
+    tags=["Identity & Auth"],
+    summary="Unified User Registration",
+    description=(
+        "Registers a new user (Tourist, Guide, Responder, or Admin), automatically "
+        "generating profile records, PyJWT Digital ID (for tourists), and JWT credentials."
+    ),
+    request=UnifiedAuthRegisterSerializer,
+    responses={
+        201: OpenApiResponse(
+            description="Registration successful with user details and tokens."
+        ),
+        400: OpenApiResponse(description="Validation error."),
+    },
+)
+class UnifiedRegisterView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = UnifiedAuthRegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        result = serializer.save()
+
+        user = result["user"]
+        profile = result["profile"]
+        tourist = result["tourist"]
+        digital_id = result["digital_id"]
+        tokens = result["tokens"]
+
+        response_data = {
+            "message": "User registered successfully.",
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "role": profile.role,
+                "is_verified": profile.is_verified,
+                "phone_number": profile.phone_number,
+            },
+            "tokens": tokens,
+        }
+
+        if tourist:
+            response_data["tourist"] = TouristSerializer(tourist).data
+        if digital_id:
+            response_data["digital_id"] = DigitalIDSerializer(digital_id).data
+
+        return Response(response_data, status=status.HTTP_201_CREATED)
+
+
+@extend_schema(
+    tags=["Identity & Auth"],
+    summary="Get current user details & digital pass",
+    description="Retrieve full details of the currently authenticated user including active passes and role profiles.",
+    responses={200: OpenApiResponse(description="Current user profile and pass data.")},
+)
+class CurrentUserDetailsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        profile = getattr(user, "profile", None)
+        role = profile.role if profile else UserRole.TOURIST
+
+        data = {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "role": role,
+            "is_verified": profile.is_verified if profile else False,
+            "phone_number": profile.phone_number if profile else "",
+            "region_scope": profile.region_scope if profile else "",
+            "emergency_contact_name": profile.emergency_contact_name if profile else "",
+            "emergency_contact_phone": (
+                profile.emergency_contact_phone if profile else ""
+            ),
+        }
+
+        # Role specific data
+        tourist = getattr(user, "tourist_profile", None)
+        if tourist:
+            data["tourist"] = TouristSerializer(tourist).data
+            active_id = tourist.digital_ids.filter(is_active=True).first()
+            if active_id:
+                data["digital_id"] = DigitalIDSerializer(active_id).data
+
+        guide = getattr(user, "guide_profile", None)
+        if guide:
+            data["guide"] = {
+                "id": guide.id,
+                "verified": guide.verified,
+                "languages_spoken": guide.languages_spoken,
+                "regions_served": guide.regions_served,
+                "rating_avg": str(guide.rating_avg),
+                "experience_years": guide.experience_years,
+                "hourly_rate": str(guide.hourly_rate),
+                "bio": guide.bio,
+            }
+
+        return Response(data, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    tags=["Identity & Auth"],
+    summary="Update current user profile",
+    description="Updates the profile details of the currently authenticated user.",
+    request=UserProfileUpdateSerializer,
+    responses={200: OpenApiResponse(description="Profile updated successfully.")},
+)
+class UserProfileUpdateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request):
+        serializer = UserProfileUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        vd = serializer.validated_data
+
+        user = request.user
+        if "first_name" in vd:
+            user.first_name = vd["first_name"]
+        if "last_name" in vd:
+            user.last_name = vd["last_name"]
+        if "email" in vd and vd["email"]:
+            user.email = vd["email"]
+        user.save()
+
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        if "phone_number" in vd:
+            profile.phone_number = vd["phone_number"]
+        if "emergency_contact_name" in vd:
+            profile.emergency_contact_name = vd["emergency_contact_name"]
+        if "emergency_contact_phone" in vd:
+            profile.emergency_contact_phone = vd["emergency_contact_phone"]
+        profile.save()
+
+        tourist = getattr(user, "tourist_profile", None)
+        if tourist:
+            if "nationality" in vd and vd["nationality"]:
+                tourist.nationality = vd["nationality"]
+            if "preferred_language" in vd and vd["preferred_language"]:
+                tourist.preferred_language = vd["preferred_language"]
+            if user.get_full_name():
+                tourist.name = user.get_full_name()
+            if profile.phone_number:
+                tourist.phone = profile.phone_number
+            tourist.save()
+
+        return Response(
+            {"message": "Profile updated successfully.", "username": user.username},
+            status=status.HTTP_200_OK,
+        )
+
+
+@extend_schema(
+    tags=["Identity & Auth"],
+    summary="Change user password",
+    description="Updates the authenticated user's password after verifying the old password.",
+    request=ChangePasswordSerializer,
+    responses={
+        200: OpenApiResponse(description="Password changed successfully."),
+        400: OpenApiResponse(
+            description="Invalid old password or mismatched new passwords."
+        ),
+    },
+)
+class ChangePasswordView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = request.user
+        old_password = serializer.validated_data["old_password"]
+        new_password = serializer.validated_data["new_password"]
+
+        if not user.check_password(old_password):
+            return Response(
+                {"old_password": ["Incorrect old password."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.set_password(new_password)
+        user.save()
+        return Response(
+            {
+                "message": "Password changed successfully. Please login with your new password."
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+@extend_schema(
+    tags=["Identity & Auth"],
+    summary="User Logout / Token Blacklist",
+    description="Logs out the current session and blacklists the refresh token if provided.",
+    responses={200: OpenApiResponse(description="Logged out successfully.")},
+)
+class LogoutAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        refresh_token = request.data.get("refresh")
+        if refresh_token:
+            try:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            except Exception:
+                pass
+
+        if request.user.is_authenticated:
+            logout(request)
+
+        return Response(
+            {"message": "Logged out successfully."}, status=status.HTTP_200_OK
+        )
 
 
 @extend_schema(
@@ -116,7 +364,6 @@ class TouristQRDetailView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Check if caller requested raw image binary via query param, accept header, or format kwarg
         format_param = request.query_params.get("format", "").lower()
         accepted_media = getattr(request, "accepted_media_type", "")
 
@@ -128,7 +375,6 @@ class TouristQRDetailView(APIView):
             png_bytes = generate_qr_png_bytes(digital_id.qr_payload_signed)
             return HttpResponse(png_bytes, content_type="image/png")
 
-        # Verify payload integrity
         is_signature_valid = True
         verification_error = None
         try:
@@ -204,4 +450,4 @@ class IdentityStatusView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        return Response({"module": "identity", "status": "active", "version": "1.0.0"})
+        return Response({"module": "identity", "status": "active", "version": "1.1.0"})

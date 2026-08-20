@@ -127,10 +127,22 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.identity.context_processors.auth_user_context",
             ],
         },
     },
 ]
+
+# Authentication Backends (supports login via email or username)
+AUTHENTICATION_BACKENDS = [
+    "apps.identity.auth_backend.EmailOrUsernameModelBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+# Auth Redirect URLs
+LOGIN_URL = "web:login"
+LOGIN_REDIRECT_URL = "web:home"
+LOGOUT_REDIRECT_URL = "web:home"
 
 WSGI_APPLICATION = "safarsetu.wsgi.application"
 ASGI_APPLICATION = "safarsetu.asgi.application"

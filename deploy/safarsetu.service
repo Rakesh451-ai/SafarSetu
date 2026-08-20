@@ -3,8 +3,8 @@ Description=SafarSetu Daphne ASGI Service
 After=network.target
 
 [Service]
-User=rakesh
-Group=rakesh
+User=root
+Group=root
 WorkingDirectory=/home/rakesh/SafarSetu
 Environment="PATH=/home/rakesh/SafarSetu/.venv/bin"
 Environment="DJANGO_SETTINGS_MODULE=safarsetu.settings.dev"

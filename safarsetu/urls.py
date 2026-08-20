@@ -201,6 +201,7 @@ urlpatterns = [
         name="v1-admin-incident-status",
     ),
     # Modular Monolith App Endpoints (API v1)
+    path("api/v1/auth/", include("apps.identity.urls", namespace="auth")),
     path("api/v1/identity/", include("apps.identity.urls", namespace="identity")),
     path("api/v1/guide/", include("apps.guide.urls", namespace="guide")),
     path("api/v1/tracking/", include("apps.tracking.urls", namespace="tracking")),

@@ -1,0 +1,267 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Create Account | SafarSetu Official Tourist & Guide Portal{% endblock %}
+
+{% block content %}
+<div class="auth-page-container" style="padding: 10px 4px 20px;">
+
+  <!-- Main Register Card -->
+  <div style="background: #FFFFFF; border: 1px solid var(--border); border-radius: 20px; padding: 22px 18px; box-shadow: var(--shadow-lg);">
+
+    <!-- Top Emblem -->
+    <div style="text-align: center; margin-bottom: 16px;">
+      <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #071326 0%, #1E3E62 100%); color: var(--gov-gold); display: inline-flex; align-items: center; justify-content: center; font-size: 24px; border: 2px solid var(--gov-gold); margin-bottom: 8px;">
+        🛡️
+      </div>
+      <h1 style="font-size: 20px; font-weight: 800; color: var(--gov-navy-900); letter-spacing: -0.5px; margin-bottom: 2px;">Create SafarSetu Account</h1>
+      <div style="font-size: 11px; font-weight: 700; color: var(--gov-gold); text-transform: uppercase; letter-spacing: 0.5px;">
+        Digital ID & Safety Verification
+      </div>
+    </div>
+
+    <!-- Error Alert if present -->
+    {% if error_message %}
+    <div style="background: var(--zone-danger-bg); border: 1px solid var(--zone-danger-border); color: var(--zone-danger-text); border-radius: 10px; padding: 10px 12px; font-size: 12px; font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+      <span>⚠️</span>
+      <div>{{ error_message }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Role Switcher Segmented Tabs -->
+    <div style="background: #F1F5F9; border-radius: 12px; padding: 4px; display: flex; gap: 4px; margin-bottom: 18px;">
+      <button
+        type="button"
+        id="tab-role-tourist"
+        onclick="switchRoleTab('TOURIST')"
+        style="flex:1; border:none; padding:10px 6px; border-radius:9px; font-size:12px; font-weight:700; cursor:pointer; transition:all 0.2s ease; background:#FFFFFF; color:var(--gov-navy-900); box-shadow:0 2px 4px rgba(0,0,0,0.08);"
+      >
+        🧭 Tourist / Traveler
+      </button>
+      <button
+        type="button"
+        id="tab-role-guide"
+        onclick="switchRoleTab('GUIDE')"
+        style="flex:1; border:none; padding:10px 6px; border-radius:9px; font-size:12px; font-weight:700; cursor:pointer; transition:all 0.2s ease; background:transparent; color:var(--text-muted);"
+      >
+        🏛️ Tour Guide
+      </button>
+    </div>
+
+    <!-- Registration Form -->
+    <form method="POST" action="{% url 'web:register' %}" id="registerForm" onsubmit="return validateRegisterForm();">
+      {% csrf_token %}
+      <input type="hidden" name="role" id="role_input" value="TOURIST">
+      <input type="hidden" name="next" value="{{ next }}">
+
+      <!-- Common Fields: Name, Email, Username, Phone -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label" for="id_first_name">First Name *</label>
+          <input type="text" name="first_name" id="id_first_name" class="form-control" placeholder="Alex" required>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label" for="id_last_name">Last Name</label>
+          <input type="text" name="last_name" id="id_last_name" class="form-control" placeholder="Morgan">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 10px;">
+        <label class="form-label" for="id_email">Email Address *</label>
+        <input type="email" name="email" id="id_email" class="form-control" placeholder="alex@example.com" required>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label" for="id_username">Username *</label>
+          <input type="text" name="username" id="id_username" class="form-control" placeholder="alex_m" required>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label" for="id_phone_number">Phone *</label>
+          <input type="text" name="phone_number" id="id_phone_number" class="form-control" placeholder="+91 98765 43210" required>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TOURIST SPECIFIC SECTION -->
+      <!-- ============================================== -->
+      <div id="tourist-fields-section">
+        <div style="font-size:11px; font-weight:700; color:var(--gov-gold); text-transform:uppercase; margin: 12px 0 8px; letter-spacing:0.4px;">
+          🪪 Identity & Trip Details
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" for="id_nationality">Nationality</label>
+            <input type="text" name="nationality" id="id_nationality" class="form-control" value="India">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" for="id_id_proof_type">ID Proof Type</label>
+            <select name="id_proof_type" id="id_id_proof_type" class="form-control" style="background:#FFF;">
+              <option value="AADHAAR">Aadhaar Card</option>
+              <option value="PASSPORT">Passport</option>
+              <option value="DRIVING_LICENSE">Driving License</option>
+              <option value="NATIONAL_ID">National ID</option>
+              <option value="OTHER">Other Official ID</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label class="form-label" for="id_id_proof_number">ID Proof Number</label>
+          <input type="text" name="id_proof_number" id="id_id_proof_number" class="form-control" placeholder="e.g. 5482-9102-8942">
+        </div>
+
+        <div style="font-size:11px; font-weight:700; color:var(--zone-danger); text-transform:uppercase; margin: 12px 0 8px; letter-spacing:0.4px;">
+          🚨 Emergency Contact (For SOS)
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" for="id_emergency_name">Contact Name</label>
+            <input type="text" name="emergency_contact_name" id="id_emergency_name" class="form-control" placeholder="Priya Sharma">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" for="id_emergency_phone">Contact Phone</label>
+            <input type="text" name="emergency_contact_phone" id="id_emergency_phone" class="form-control" placeholder="+91 98234 56789">
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- GUIDE SPECIFIC SECTION -->
+      <!-- ============================================== -->
+      <div id="guide-fields-section" style="display: none;">
+        <div style="font-size:11px; font-weight:700; color:var(--verified-badge); text-transform:uppercase; margin: 12px 0 8px; letter-spacing:0.4px;">
+          🏛️ Guide Qualifications & Pricing
+        </div>
+
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label class="form-label" for="id_languages">Languages Spoken *</label>
+          <input type="text" name="languages_spoken" id="id_languages" class="form-control" placeholder="English, Hindi, French, Rajasthani" value="English, Hindi">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" for="id_experience">Experience (Years)</label>
+            <input type="number" name="experience_years" id="id_experience" class="form-control" value="3" min="0">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" for="id_hourly_rate">Hourly Rate (₹)</label>
+            <input type="number" name="hourly_rate" id="id_hourly_rate" class="form-control" value="500" min="0">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label class="form-label" for="id_regions">Regions Served</label>
+          <input type="text" name="regions_served" id="id_regions" class="form-control" value="Jaipur, Amer, Rajasthan">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label class="form-label" for="id_bio">Short Bio</label>
+          <textarea name="bio" id="id_bio" class="form-control" rows="2" placeholder="Tell tourists about your heritage expertise and guided tours..." style="height:auto;"></textarea>
+        </div>
+      </div>
+
+      <!-- Password & Confirm Password -->
+      <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin: 12px 0 8px; letter-spacing:0.4px;">
+        🔒 Account Security
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label" for="id_reg_password">Password *</label>
+          <input type="password" name="password" id="id_reg_password" class="form-control" placeholder="••••••••" required minlength="8">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label" for="id_reg_confirm">Confirm *</label>
+          <input type="password" name="confirm_password" id="id_reg_confirm" class="form-control" placeholder="••••••••" required minlength="8">
+        </div>
+      </div>
+
+      <div id="pwd_match_error" style="display:none; color:var(--zone-danger-text); font-size:12px; font-weight:600; margin-bottom:10px;">
+        ⚠️ Passwords do not match!
+      </div>
+
+      <!-- Submit Button -->
+      <button
+        type="submit"
+        class="btn-primary"
+        style="height: 48px; font-size: 15px; font-weight: 800; border-radius: 12px; background: linear-gradient(135deg, #071326 0%, #1E3E62 100%); color: #FFFFFF; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(7, 19, 38, 0.3); border: none;"
+      >
+        <span id="btn-submit-text">Create Tourist Pass & Account 🛡️</span>
+      </button>
+    </form>
+
+    <!-- Already have an account -->
+    <div style="text-align: center; margin-top: 16px;">
+      <span style="font-size: 13px; color: var(--text-muted);">Already registered? </span>
+      <a href="{% url 'web:login' %}" style="font-size: 13px; font-weight: 700; color: var(--gov-navy-700); text-decoration: underline;">
+        Sign In Here →
+      </a>
+    </div>
+
+  </div>
+
+  <div style="text-align: center; margin-top: 12px;">
+    <a href="{% url 'web:home' %}" style="font-size: 12px; color: #94A3B8; text-decoration: none;">
+      ← Return to Home Dashboard
+    </a>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function switchRoleTab(role) {
+  const roleInput = document.getElementById("role_input");
+  const tabTourist = document.getElementById("tab-role-tourist");
+  const tabGuide = document.getElementById("tab-role-guide");
+  const touristFields = document.getElementById("tourist-fields-section");
+  const guideFields = document.getElementById("guide-fields-section");
+  const submitText = document.getElementById("btn-submit-text");
+
+  roleInput.value = role;
+
+  if (role === "TOURIST") {
+    tabTourist.style.background = "#FFFFFF";
+    tabTourist.style.color = "var(--gov-navy-900)";
+    tabTourist.style.boxShadow = "0 2px 4px rgba(0,0,0,0.08)";
+
+    tabGuide.style.background = "transparent";
+    tabGuide.style.color = "var(--text-muted)";
+    tabGuide.style.boxShadow = "none";
+
+    touristFields.style.display = "block";
+    guideFields.style.display = "none";
+    submitText.textContent = "Create Tourist Pass & Account 🛡️";
+  } else {
+    tabGuide.style.background = "#FFFFFF";
+    tabGuide.style.color = "var(--gov-navy-900)";
+    tabGuide.style.boxShadow = "0 2px 4px rgba(0,0,0,0.08)";
+
+    tabTourist.style.background = "transparent";
+    tabTourist.style.color = "var(--text-muted)";
+    tabTourist.style.boxShadow = "none";
+
+    touristFields.style.display = "none";
+    guideFields.style.display = "block";
+    submitText.textContent = "Register as Verified Guide 🏛️";
+  }
+}
+
+function validateRegisterForm() {
+  const p1 = document.getElementById("id_reg_password").value;
+  const p2 = document.getElementById("id_reg_confirm").value;
+  const errDiv = document.getElementById("pwd_match_error");
+
+  if (p1 !== p2) {
+    errDiv.style.display = "block";
+    return false;
+  }
+  errDiv.style.display = "none";
+  return true;
+}
+</script>
+{% endblock %}
