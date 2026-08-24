@@ -14,6 +14,19 @@ export type Page =
   | 'admin' 
   | 'profile';
 
+export interface AuthUser {
+  id: number | string;
+  email: string;
+  name: string;
+  phone?: string;
+  role: 'TOURIST' | 'ADMIN' | 'RESPONSE_OPERATOR';
+  preferred_language?: string;
+  digital_id?: string;
+  avatar_url?: string;
+  is_staff?: boolean;
+}
+
+
 export interface Language {
   code: string;
   name: string;
@@ -22,12 +35,14 @@ export interface Language {
 }
 
 export interface EmergencyContact {
+  id?: number | string;
   name: string;
   relationship: string;
   phone: string;
-  email: string;
-  isPrimary: boolean;
+  email?: string;
+  isPrimary?: boolean;
 }
+
 
 export interface TouristProfile {
   id: string;
@@ -43,7 +58,9 @@ export interface TouristProfile {
   medicalNotes: string;
   avatarUrl: string;
   qrCodeUrl: string;
+  preferredLanguage?: string;
   verificationStatus: 'verified' | 'pending' | 'unverified';
+
   verifiedBy: string;
   safetyStatus: 'safe' | 'caution' | 'danger';
   checkInDueMinutes: number;

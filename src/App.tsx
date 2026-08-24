@@ -17,7 +17,9 @@ const DigitalIDView = lazy(() => import('./components/digital_id/DigitalIDView')
 const AICopilotView = lazy(() => import('./components/assistant/AICopilotView').then(m => ({ default: m.AICopilotView })));
 const TouristInteractiveMap = lazy(() => import('./components/map/TouristInteractiveMap').then(m => ({ default: m.TouristInteractiveMap })));
 const UserProfileView = lazy(() => import('./components/profile/UserProfileView').then(m => ({ default: m.UserProfileView })));
+const AdminDashboardView = lazy(() => import('./components/admin/AdminDashboardView').then(m => ({ default: m.AdminDashboardView })));
 const QRScannerModal = lazy(() => import('./components/digital_id/QRScannerModal').then(m => ({ default: m.QRScannerModal })));
+const AuthModal = lazy(() => import('./components/auth/AuthModal').then(m => ({ default: m.AuthModal })));
 
 export const App: React.FC = () => {
   const { currentPage } = useApp();
@@ -42,6 +44,8 @@ export const App: React.FC = () => {
         return <TouristInteractiveMap />;
       case 'profile':
         return <UserProfileView />;
+      case 'admin':
+        return <AdminDashboardView />;
       case 'sos':
       case 'checkin':
         return <LiveSafetyCenterView />;
@@ -80,10 +84,12 @@ export const App: React.FC = () => {
       <ToastContainer />
       <Suspense fallback={null}>
         <QRScannerModal />
+        <AuthModal />
       </Suspense>
 
     </div>
   );
 };
+
 
 export default App;

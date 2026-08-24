@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { AIMessage } from '../../types';
+import { api } from '../../services/api';
 import {
   Send,
   Bot,
@@ -51,47 +52,63 @@ export const AICopilotView: React.FC = () => {
     setInputQuery('');
     setIsTyping(true);
 
-    // Simple, helpful assistant responses
-    setTimeout(() => {
-      let reply: string;
-      let card: any = null;
-
-      const lower = text.toLowerCase();
-
-      if (lower.includes('jaipur') || lower.includes('plan')) {
-        reply = "Here is a simple **2-Day Jaipur Itinerary**:\n\n• **Day 1**: Amber Fort (Morning) ➔ City Palace (Afternoon) ➔ Hawa Mahal (Sunset)\n• **Day 2**: Nahargarh Fort ➔ Jantar Mantar ➔ Local Crafts Market\n\nAll routes are in verified green safe zones.";
-        card = {
-          title: 'Amber Fort & Palace',
-          subtitle: 'Jaipur, Rajasthan • Open 08:00 AM - 06:00 PM',
-          destId: 'amber-fort',
-        };
-      } else if (lower.includes('agra') || lower.includes('places') || lower.includes('near')) {
-        reply = "In **Agra**, the top verified destinations are:\n\n1. **Taj Mahal** (East & West Gates)\n2. **Agra Fort** (2.5 km away)\n3. **Mehtab Bagh** (Sunset viewpoint across the Yamuna River)\n\nAll locations have active tourist police assistance booths.";
-        card = {
-          title: 'Taj Mahal',
-          subtitle: 'Agra, Uttar Pradesh • 🟢 Safe Zone',
-          destId: 'taj-mahal',
-        };
-      } else if (lower.includes('safe') || lower.includes('route')) {
-        reply = "The safest and fastest route from **Delhi to Jaipur** is via the **Delhi-Mumbai Expressway (NE4)** by car/cab (approx. 3.5 hours) or via the **Vande Bharat Express** train (approx. 3 hours 15 mins).";
-      } else if (lower.includes('budget')) {
-        reply = "💡 **Budget Tips for Taj Mahal**:\n\n• Entry ticket for Indian nationals is ₹50 (ASI standard).\n• Use government battery electric shuttles (₹10) from the parking lot to the monument gate.\n• Early morning (06:30 AM) offers the lowest crowd levels and best photography lighting.";
-      } else {
-        reply = `Here is helpful guidance for "${text}":\n\nAll destinations on SafarSetu are verified by tourism authorities. Let me know if you would like route directions, timings, or safety details.`;
-      }
-
-      setMessages(prev => [
-        ...prev,
-        {
-          id: `ai-${Date.now()}`,
-          sender: 'assistant',
-          timestamp: 'Just now',
-          text: reply,
-          cards: card ? [card] : undefined,
+    // Call backend AI API with fallback
+    api.chatWithAI(text.trim())
+      .then((res) => {
+        if (res.success && res.data) {
+          setMessages(prev => [...prev, {
+            id: res.data.id || `ai-${Date.now()}`,
+            sender: 'assistant',
+            timestamp: 'Just now',
+            text: res.data.text,
+            cards: res.data.cards || undefined,
+          }]);
+        } else {
+          throw new Error('API returned unsuccesful');
         }
-      ]);
-      setIsTyping(false);
-    }, 800);
+      })
+      .catch(() => {
+        // Helpful fallback assistant responses
+        let reply: string;
+        let card: any = null;
+        const lower = text.toLowerCase();
+
+        if (lower.includes('jaipur') || lower.includes('plan')) {
+          reply = "Here is a simple **2-Day Jaipur Itinerary**:\n\n• **Day 1**: Amber Fort (Morning) ➔ City Palace (Afternoon) ➔ Hawa Mahal (Sunset)\n• **Day 2**: Nahargarh Fort ➔ Jantar Mantar ➔ Local Crafts Market\n\nAll routes are in verified green safe zones.";
+          card = {
+            title: 'Amber Fort & Palace',
+            subtitle: 'Jaipur, Rajasthan • Open 08:00 AM - 06:00 PM',
+            destId: 'amber-fort',
+          };
+        } else if (lower.includes('agra') || lower.includes('places') || lower.includes('near')) {
+          reply = "In **Agra**, the top verified destinations are:\n\n1. **Taj Mahal** (East & West Gates)\n2. **Agra Fort** (2.5 km away)\n3. **Mehtab Bagh** (Sunset viewpoint across the Yamuna River)\n\nAll locations have active tourist police assistance booths.";
+          card = {
+            title: 'Taj Mahal',
+            subtitle: 'Agra, Uttar Pradesh • 🟢 Safe Zone',
+            destId: 'taj-mahal',
+          };
+        } else if (lower.includes('safe') || lower.includes('route')) {
+          reply = "The safest and fastest route from **Delhi to Jaipur** is via the **Delhi-Mumbai Expressway (NE4)** by car/cab (approx. 3.5 hours) or via the **Vande Bharat Express** train (approx. 3 hours 15 mins).";
+        } else if (lower.includes('budget')) {
+          reply = "💡 **Budget Tips for Taj Mahal**:\n\n• Entry ticket for Indian nationals is ₹50 (ASI standard).\n• Use government battery electric shuttles (₹10) from the parking lot to the monument gate.\n• Early morning (06:30 AM) offers the lowest crowd levels and best photography lighting.";
+        } else {
+          reply = `Here is helpful guidance for "${text}":\n\nAll destinations on SafarSetu are verified by tourism authorities. Let me know if you would like route directions, timings, or safety details.`;
+        }
+
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `ai-${Date.now()}`,
+            sender: 'assistant',
+            timestamp: 'Just now',
+            text: reply,
+            cards: card ? [card] : undefined,
+          }
+        ]);
+      })
+      .finally(() => {
+        setIsTyping(false);
+      });
   };
 
   return (

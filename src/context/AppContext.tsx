@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Page, TouristProfile, SafetyAlert, ItineraryItem, OfflinePack } from '../types';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { Page, TouristProfile, SafetyAlert, ItineraryItem, OfflinePack, AuthUser } from '../types';
 import { UI_TRANSLATIONS } from '../data/languagesData';
 import { SAFETY_ALERTS_DATA } from '../data/safetyData';
 import { DEFAULT_ITINERARY } from '../data/itineraryData';
 import { OFFLINE_PACKS_DATA } from '../data/offlineData';
+import { api } from '../services/api';
 
 export interface ToastMessage {
   id: string;
@@ -23,6 +24,20 @@ interface AppContextType {
   setLanguageModalOpen: (open: boolean) => void;
   theme: 'light' | 'dark';
   toggleTheme: () => void;
+  
+  // Authentication & User State
+  authUser: AuthUser | null;
+  isAuthenticated: boolean;
+  isAuthLoading: boolean;
+  isAuthModalOpen: boolean;
+  authModalView: 'login' | 'register';
+  openAuthModal: (view?: 'login' | 'register') => void;
+  closeAuthModal: () => void;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (data: any) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
+
+
   user: TouristProfile;
   updateUser: (fields: Partial<TouristProfile>) => void;
   isSosModalOpen: boolean;
@@ -116,6 +131,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [currentLanguage, setCurrentLanguage] = useState<string>('en');
   const [isLanguageModalOpen, setLanguageModalOpen] = useState<boolean>(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  
+  // Auth state
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [authModalView, setAuthModalView] = useState<'login' | 'register'>('login');
+
   const [user, setUser] = useState<TouristProfile>(DEFAULT_USER);
   const [isSosModalOpen, setSosModalOpen] = useState<boolean>(false);
   const [isSosActive, setSosActive] = useState<boolean>(false);
@@ -134,6 +157,91 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       document.documentElement.classList.remove('dark');
     }
   }, [theme]);
+
+  const showToast = useCallback((toast: { title: string; message: string; type?: 'success' | 'warning' | 'error' | 'info' }) => {
+    const id = Date.now().toString();
+    const newToast: ToastMessage = {
+      id,
+      title: toast.title,
+      message: toast.message,
+      type: toast.type || 'info',
+    };
+    setToasts(prev => [...prev, newToast]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 4500);
+  }, []);
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  // Helper to map backend profile data to state
+  const applyProfileData = useCallback((profileData: any, userData?: any) => {
+    if (!profileData) return;
+    setUser(prev => ({
+      ...prev,
+      ...profileData,
+      id: profileData.id || profileData.digital_id || prev.id,
+      name: profileData.name || profileData.full_name || prev.name,
+      email: profileData.email || prev.email,
+      phone: profileData.phone || prev.phone,
+      avatarUrl: profileData.avatarUrl || profileData.avatar_url || prev.avatarUrl,
+      qrCodeUrl: profileData.qrCodeUrl || `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=SAFARSETU-ID-${profileData.id || profileData.digital_id || prev.id}-VERIFIED`,
+      emergencyContacts: profileData.emergencyContacts || prev.emergencyContacts,
+      currentTrip: profileData.currentTrip || prev.currentTrip,
+      journeyHistory: profileData.journeyHistory || prev.journeyHistory,
+      privacySettings: profileData.privacySettings || prev.privacySettings,
+    }));
+  }, []);
+
+  // Initialize session from backend on mount
+  useEffect(() => {
+    const initAuth = async () => {
+      setIsAuthLoading(true);
+      const token = api.getToken();
+      if (!token) {
+        setIsAuthenticated(false);
+        setAuthUser(null);
+        setIsAuthLoading(false);
+        return;
+      }
+
+      try {
+        const meRes = await api.getMe();
+        if (meRes && meRes.success && meRes.data) {
+          const userData = meRes.data.user || meRes.data;
+          setAuthUser(userData);
+          setIsAuthenticated(true);
+          if (meRes.data.profile) {
+            applyProfileData(meRes.data.profile, userData);
+          } else {
+            // Also fetch full profile
+            try {
+              const profRes = await api.getProfile();
+              if (profRes && profRes.success && profRes.data) {
+                applyProfileData(profRes.data, userData);
+              }
+            } catch {
+              // Ignore profile fetch failure
+            }
+          }
+        } else {
+          // Invalid or expired token
+          setIsAuthenticated(false);
+          setAuthUser(null);
+        }
+      } catch (e) {
+        console.warn('Session restoration failed:', e);
+        setIsAuthenticated(false);
+        setAuthUser(null);
+      } finally {
+        setIsAuthLoading(false);
+      }
+    };
+
+    initAuth();
+  }, [applyProfileData]);
 
   // Check-in interval countdown simulation
   useEffect(() => {
@@ -154,26 +262,96 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
   };
 
+  const openAuthModal = (view: 'login' | 'register' = 'login') => {
+    setAuthModalView(view);
+    setIsAuthModalOpen(true);
+  };
+
+  const closeAuthModal = () => {
+    setIsAuthModalOpen(false);
+  };
+
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const res = await api.login(email, password);
+      if (res && res.success && res.data) {
+        const userData = res.data.user;
+        setAuthUser(userData);
+        setIsAuthenticated(true);
+        if (res.data.profile) {
+          applyProfileData(res.data.profile, userData);
+        }
+        showToast({
+          title: '✓ Welcome to SafarSetu',
+          message: `Signed in successfully as ${userData.name || userData.email}.`,
+          type: 'success',
+        });
+        return { success: true };
+      } else {
+        const errorMsg = res.message || res.errors?.non_field_errors?.[0] || 'Invalid email or password.';
+        return { success: false, error: errorMsg };
+      }
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Server connection error. Please try again.' };
+    }
+  };
+
+  const register = async (data: any): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const res = await api.register(data);
+      if (res && res.success && res.data) {
+        const userData = res.data.user;
+        setAuthUser(userData);
+        setIsAuthenticated(true);
+        if (res.data.profile) {
+          applyProfileData(res.data.profile, userData);
+        }
+        showToast({
+          title: '🎉 Account Created & Verified',
+          message: `Welcome, ${userData.name || userData.email}! Your Digital Tourist ID has been issued.`,
+          type: 'success',
+        });
+        return { success: true };
+      } else {
+        let errorMsg = res?.message || 'Registration failed.';
+        if (res?.errors) {
+          const firstKey = Object.keys(res.errors)[0];
+          if (firstKey && res.errors[firstKey]) {
+            const firstErr = Array.isArray(res.errors[firstKey]) ? res.errors[firstKey][0] : res.errors[firstKey];
+            errorMsg = typeof firstErr === 'string' ? firstErr : `${firstKey}: ${firstErr}`;
+          }
+        }
+        return { success: false, error: errorMsg };
+      }
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'An error occurred during registration.' };
+    }
+  };
+
+
+
+  const logout = async () => {
+    try {
+      await api.logout();
+    } catch {
+      // Ignore
+    } finally {
+      setIsAuthenticated(false);
+      setAuthUser(null);
+      setUser(DEFAULT_USER);
+      showToast({
+        title: 'Signed Out',
+        message: 'You have been safely logged out of SafarSetu.',
+        type: 'info',
+      });
+    }
+  };
+
   const updateUser = (fields: Partial<TouristProfile>) => {
     setUser(prev => ({ ...prev, ...fields }));
-  };
-
-  const showToast = (toast: { title: string; message: string; type?: 'success' | 'warning' | 'error' | 'info' }) => {
-    const id = Date.now().toString();
-    const newToast: ToastMessage = {
-      id,
-      title: toast.title,
-      message: toast.message,
-      type: toast.type || 'info',
-    };
-    setToasts(prev => [...prev, newToast]);
-    setTimeout(() => {
-      dismissToast(id);
-    }, 4500);
-  };
-
-  const dismissToast = (id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
+    if (isAuthenticated) {
+      api.updateProfile(fields).catch(() => {});
+    }
   };
 
   const triggerSOS = () => {
@@ -185,6 +363,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       message: 'Coordinates broadcasted to UP Tourist Police (1363) & Registered Emergency Contacts.',
       type: 'error',
     });
+    api.triggerSOS({
+      latitude: 27.1712,
+      longitude: 78.0460,
+      description: 'Emergency SOS beacon triggered by tourist'
+    }).catch(() => {});
   };
 
   const cancelSOS = () => {
@@ -195,6 +378,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       message: 'Emergency responders and contacts have been informed that you are safe.',
       type: 'success',
     });
+    api.cancelSOS().catch(() => {});
   };
 
   const performCheckIn = () => {
@@ -222,6 +406,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       message: 'Your safety status has been updated and synchronized with the tourist registry.',
       type: 'success',
     });
+    api.performCheckIn({
+      latitude: 27.1751,
+      longitude: 78.0421,
+      location_name: `${user.currentTrip?.currentCity || 'Agra'} Heritage Checkpoint`
+    }).catch(() => {});
   };
 
   const extendCheckInTime = (minutes: number) => {
@@ -243,9 +432,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const optimizeItinerary = () => {
-    // Intelligent reordering simulation based on optimal sunlight, crowd curves, and geodistance
     const optimized = [...itinerary].sort((a, b) => {
-      // Sort day 1 morning outdoor heritage first, indoor mid-day, sunset outdoor
       return a.order - b.order;
     });
     setItinerary(optimized);
@@ -254,6 +441,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       message: 'Trip reordered to avoid afternoon peak crowds and reduce cab travel time by 35 minutes.',
       type: 'success',
     });
+    api.optimizeItinerary().catch(() => {});
   };
 
   const toggleDownloadPack = (packId: string) => {
@@ -297,6 +485,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setLanguageModalOpen,
         theme,
         toggleTheme,
+        
+        // Auth State & Methods
+        authUser,
+        isAuthenticated,
+        isAuthLoading,
+        isAuthModalOpen,
+        authModalView,
+        openAuthModal,
+        closeAuthModal,
+        login,
+        register,
+        logout,
+
+
         user,
         updateUser,
         isSosModalOpen,
@@ -335,3 +537,4 @@ export const useApp = () => {
   }
   return context;
 };
+

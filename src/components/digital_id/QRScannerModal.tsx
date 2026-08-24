@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { DESTINATIONS_DATA } from '../../data/destinationsData';
+import { api } from '../../services/api';
 import { Camera, X, QrCode, Sparkles } from 'lucide-react';
 
 export const QRScannerModal: React.FC = () => {
@@ -13,6 +14,9 @@ export const QRScannerModal: React.FC = () => {
     setQrScannerOpen(false);
     setSelectedDestinationId(destinationId);
     setCurrentPage('destination');
+
+    // Notify backend QR log
+    api.scanQRCode(destinationId).catch(() => {});
 
     showToast({
       title: 'QR Code Scanned',
