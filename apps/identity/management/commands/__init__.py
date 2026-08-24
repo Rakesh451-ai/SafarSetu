@@ -1,3 +1,0 @@
-"""
-Identity management commands package.
-"""

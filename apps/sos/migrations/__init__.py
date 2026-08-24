@@ -1,3 +1,0 @@
-"""
-SOS app migrations.
-"""

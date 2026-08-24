@@ -1,3 +1,0 @@
-"""
-Listings app migrations.
-"""
