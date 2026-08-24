@@ -1,130 +1,70 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useApp } from '../../context/AppContext';
-import {
-  QrCode,
-  X,
-  Flashlight,
-  SwitchCamera,
-  Compass,
-  CheckCircle2,
-  Sparkles,
-  MapPin
-} from 'lucide-react';
+import { DESTINATIONS_DATA } from '../../data/destinationsData';
+import { Camera, X, QrCode, Sparkles } from 'lucide-react';
 
 export const QRScannerModal: React.FC = () => {
-  const { isQrScannerOpen, setQrScannerOpen, setCurrentPage, setSelectedDestinationId, showToast } = useApp();
-  const [isFlashOn, setIsFlashOn] = useState(false);
-  const [scanningStatus, setScanningStatus] = useState<string | null>(null);
+  const { isQrScannerOpen, setQrScannerOpen, setSelectedDestinationId, setCurrentPage, showToast } = useApp();
 
   if (!isQrScannerOpen) return null;
 
-  const sampleQRs = [
-    { id: 'taj-mahal', label: 'Taj Mahal East Gate (Agra)', code: 'SAFARSETU-POI-AGR-001' },
-    { id: 'amber-fort', label: 'Amber Fort Suraj Pol (Jaipur)', code: 'SAFARSETU-POI-JAI-001' },
-    { id: 'varanasi-ghats', label: 'Dashashwamedh Ghat (Varanasi)', code: 'SAFARSETU-POI-VNS-001' },
-    { id: 'munnar-hills', label: 'Eravikulam National Park (Munnar)', code: 'SAFARSETU-POI-KER-001' },
-  ];
+  const handleSimulateScan = (destinationId: string) => {
+    const dest = DESTINATIONS_DATA.find(d => d.id === destinationId);
+    setQrScannerOpen(false);
+    setSelectedDestinationId(destinationId);
+    setCurrentPage('destination');
 
-  const handleSimulateScan = (destId: string, label: string) => {
-    setScanningStatus(`Verified: ${label}`);
-    setTimeout(() => {
-      setSelectedDestinationId(destId);
-      setQrScannerOpen(false);
-      setCurrentPage('destination');
-      showToast({
-        title: '✓ Monument QR Code Verified',
-        message: `Audio guide, 360° panorama & safety brief for ${label} unlocked.`,
-        type: 'success',
-      });
-    }, 900);
+    showToast({
+      title: 'QR Code Scanned',
+      message: `Verified ASI guide loaded for ${dest?.name || 'Monument'}.`,
+      type: 'success',
+    });
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
-      <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-6 text-white shadow-2xl overflow-hidden animate-scale-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+      <div className="bg-white rounded-2xl border border-slate-200 max-w-sm w-full p-6 text-center space-y-4 shadow-2xl">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-safar-teal-500/20 text-safar-teal-400 flex items-center justify-center">
-              <QrCode className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="font-display font-black text-lg text-white">
-                SafarSetu QR Scanner
-              </h3>
-              <p className="text-xs text-slate-400">Scan verified location & monument QR codes</p>
-            </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-left">
+            <Camera className="w-4 h-4 text-[#12355B]" />
+            <h2 className="font-bold text-sm text-[#172033]">Scan Monument QR</h2>
           </div>
           <button
             onClick={() => setQrScannerOpen(false)}
-            className="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition-colors"
+            className="p-1 text-slate-400 hover:text-slate-700"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Viewfinder simulation */}
-        <div className="my-6 relative aspect-square max-w-xs mx-auto rounded-3xl bg-slate-950 border-2 border-slate-800 overflow-hidden flex items-center justify-center">
-          {/* Laser scanning bar */}
-          <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-safar-teal-400 to-transparent shadow-lg shadow-safar-teal-500 animate-bounce" />
-
-          {/* Reticle corner markers */}
-          <div className="absolute top-4 left-4 w-8 h-8 border-t-4 border-l-4 border-safar-saffron-500 rounded-tl-lg" />
-          <div className="absolute top-4 right-4 w-8 h-8 border-t-4 border-r-4 border-safar-saffron-500 rounded-tr-lg" />
-          <div className="absolute bottom-4 left-4 w-8 h-8 border-b-4 border-l-4 border-safar-saffron-500 rounded-bl-lg" />
-          <div className="absolute bottom-4 right-4 w-8 h-8 border-b-4 border-r-4 border-safar-saffron-500 rounded-br-lg" />
-
-          {/* Central Target Icon */}
-          <div className="text-center p-6 space-y-2">
-            <QrCode className="w-16 h-16 mx-auto text-slate-700 animate-pulse" />
-            <p className="text-xs text-slate-400 font-medium">
-              {scanningStatus || 'Point camera at official SafarSetu or ASI QR badge'}
-            </p>
-          </div>
-
-          {/* Flash and camera toggle buttons inside viewfinder */}
-          <div className="absolute bottom-3 inset-x-0 flex justify-center gap-4">
-            <button
-              onClick={() => setIsFlashOn(prev => !prev)}
-              className={`p-2.5 rounded-full backdrop-blur-md transition-colors ${
-                isFlashOn ? 'bg-amber-400 text-slate-950 font-bold' : 'bg-slate-800/80 text-slate-300'
-              }`}
-              title="Flashlight"
-            >
-              <Flashlight className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => showToast({ title: 'Camera Switched', message: 'Front/Back camera toggled.', type: 'info' })}
-              className="p-2.5 rounded-full bg-slate-800/80 text-slate-300 backdrop-blur-md hover:bg-slate-700 transition-colors"
-              title="Switch Camera"
-            >
-              <SwitchCamera className="w-4 h-4" />
-            </button>
-          </div>
+        <div className="relative aspect-square max-w-[200px] mx-auto rounded-xl bg-slate-900 flex items-center justify-center overflow-hidden border-2 border-dashed border-slate-300">
+          <QrCode className="w-20 h-20 text-white/20" />
+          <div className="absolute inset-x-4 top-1/2 h-0.5 bg-[#F28C28] animate-pulse" />
         </div>
 
-        {/* Quick Simulation Scanner Chips */}
-        <div className="space-y-2">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-            <span>Instant Demo QR Codes</span>
-            <span className="text-safar-saffron-400 text-[10px]">Click to scan</span>
-          </div>
+        <p className="text-xs text-slate-500">
+          Point camera at official ASI monument QR codes or police information kiosks.
+        </p>
 
-          <div className="grid grid-cols-2 gap-2">
-            {sampleQRs.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => handleSimulateScan(item.id, item.label)}
-                className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-safar-navy-800 border border-slate-700 hover:border-safar-teal-500 text-left transition-all text-xs group"
-              >
-                <div className="flex items-center gap-1.5 text-safar-saffron-400 font-semibold truncate group-hover:text-safar-teal-400">
-                  <MapPin className="w-3 h-3 shrink-0" />
-                  <span className="truncate">{item.label}</span>
-                </div>
-                <div className="font-mono text-[10px] text-slate-400 mt-1 truncate">{item.code}</div>
-              </button>
-            ))}
+        {/* Quick Demo Scan Buttons */}
+        <div className="space-y-1.5 pt-2 border-t border-slate-100">
+          <span className="text-[11px] font-semibold text-slate-400 block">Or test with demo QR:</span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleSimulateScan('taj-mahal')}
+              className="flex-1 py-2 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-800 transition-colors"
+            >
+              🏛️ Taj Mahal
+            </button>
+            <button
+              onClick={() => handleSimulateScan('amber-fort')}
+              className="flex-1 py-2 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-800 transition-colors"
+            >
+              🏰 Amber Fort
+            </button>
           </div>
         </div>
 
