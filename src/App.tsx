@@ -1,23 +1,23 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { useApp } from './context/AppContext';
 import { Navbar } from './components/layout/Navbar';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { Footer } from './components/layout/Footer';
 import { ToastContainer } from './components/common/ToastContainer';
 import { LanguageModal } from './components/layout/LanguageModal';
-
 import { HeroSection } from './components/home/HeroSection';
-import { DashboardView } from './components/dashboard/DashboardView';
-import { DigitalIDView } from './components/digital_id/DigitalIDView';
-import { DestinationGuideView } from './components/destination/DestinationGuideView';
-import { AICopilotView } from './components/assistant/AICopilotView';
-import { SmartItineraryView } from './components/itinerary/SmartItineraryView';
-import { LiveSafetyCenterView } from './components/safety/LiveSafetyCenterView';
-import { TouristInteractiveMap } from './components/map/TouristInteractiveMap';
-import { UserProfileView } from './components/profile/UserProfileView';
-
 import { SOSModal } from './components/sos/SOSModal';
-import { QRScannerModal } from './components/digital_id/QRScannerModal';
+
+// Lazy load views for optimal bundle splitting and fast initial page load
+const DashboardView = lazy(() => import('./components/dashboard/DashboardView').then(m => ({ default: m.DashboardView })));
+const DestinationGuideView = lazy(() => import('./components/destination/DestinationGuideView').then(m => ({ default: m.DestinationGuideView })));
+const SmartItineraryView = lazy(() => import('./components/itinerary/SmartItineraryView').then(m => ({ default: m.SmartItineraryView })));
+const LiveSafetyCenterView = lazy(() => import('./components/safety/LiveSafetyCenterView').then(m => ({ default: m.LiveSafetyCenterView })));
+const DigitalIDView = lazy(() => import('./components/digital_id/DigitalIDView').then(m => ({ default: m.DigitalIDView })));
+const AICopilotView = lazy(() => import('./components/assistant/AICopilotView').then(m => ({ default: m.AICopilotView })));
+const TouristInteractiveMap = lazy(() => import('./components/map/TouristInteractiveMap').then(m => ({ default: m.TouristInteractiveMap })));
+const UserProfileView = lazy(() => import('./components/profile/UserProfileView').then(m => ({ default: m.UserProfileView })));
+const QRScannerModal = lazy(() => import('./components/digital_id/QRScannerModal').then(m => ({ default: m.QRScannerModal })));
 
 export const App: React.FC = () => {
   const { currentPage } = useApp();
@@ -53,25 +53,34 @@ export const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#172033] flex flex-col font-sans antialiased">
       
-      {/* 1. Simple, Clean Top Navbar */}
+      {/* 1. Top Navbar */}
       <Navbar />
 
-      {/* 2. Main Content Area (Centered with reasonable width and intentional whitespace) */}
+      {/* 2. Main Content Area with Suspense Lazy Loading */}
       <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-4">
-        {renderCurrentView()}
+        <Suspense fallback={
+          <div className="py-20 text-center flex flex-col items-center justify-center space-y-2 text-slate-400">
+            <div className="w-6 h-6 border-2 border-[#12355B] border-t-transparent rounded-full animate-spin" />
+            <span className="text-xs">Loading SafarSetu...</span>
+          </div>
+        }>
+          {renderCurrentView()}
+        </Suspense>
       </main>
 
-      {/* 3. Clean Footer */}
+      {/* 3. Footer */}
       <Footer />
 
-      {/* 4. Mobile Bottom Navigation Bar */}
+      {/* 4. Mobile Bottom Navigation */}
       <MobileBottomNav />
 
-      {/* 5. Essential Modals & Toasts */}
+      {/* 5. Modals & Overlays */}
       <SOSModal />
-      <QRScannerModal />
       <LanguageModal />
       <ToastContainer />
+      <Suspense fallback={null}>
+        <QRScannerModal />
+      </Suspense>
 
     </div>
   );
